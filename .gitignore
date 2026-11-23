@@ -1,0 +1,33 @@
+# Сборка Gradle и Android
+.gradle/
+build/
+**/build/
+.cxx/
+.externalNativeBuild/
+.kotlin/
+captures/
+*.apk
+*.aab
+*.ap_
+*.dex
+output-metadata.json
+
+# Локальная конфигурация SDK и подписи. В репозиторий не входят.
+local.properties
+keystore.properties
+*.jks
+*.keystore
+
+# Android Studio и IntelliJ
+.idea/
+*.iml
+*.hprof
+.navigation/
+
+# Python-генератор базы
+__pycache__/
+*.pyc
+
+# ОС
+.DS_Store
+Thumbs.db
