@@ -74,6 +74,8 @@ tools/entries_linux.py              исходные записи Linux
 tools/entries_windows.py            исходные записи Windows
 tools/build_commands.py             сборка JSON и проверка дублей
 docs/screenshots/                   снимки экрана для README
+fastlane/metadata/android/          тексты, значок и снимки для F-Droid
+docs/fdroid-metadata.yml            черновик метаданных fdroiddata, в сборку не входит
 ```
 
 Приложение не обращается к Python. Скрипт нужен только чтобы править базу и заново собрать JSON.
@@ -143,22 +145,28 @@ export ANDROID_HOME="$HOME/Android/Sdk"   # или путь к вашему SDK
 
 `assembleDebug` подписывает APK отладочным ключом. Его можно ставить на телефон.
 
-`assembleRelease` сейчас собирает **неподписанный** APK: минификация выключена, хранилище подписи не задано. Файл:
+`assembleRelease` собирает **неподписанный** APK, если не задана переменная `KEYSTORE_FILE`. Минификация выключена. Так собирает F-Droid: своих ключей у него нет, подпись ставит сам. Файл:
 
 ```text
 app/build/outputs/apk/release/app-release-unsigned.apk
 ```
 
-Его нельзя поставить, пока он не подписан. Для своей подписи создайте хранилище и файл `keystore.properties` в корне проекта (оба пути в `.gitignore`):
+Его нельзя поставить, пока он не подписан. Своя подпись включается только вместе с переменными окружения. Те же имена использует `.github/workflows/release.yml`:
 
-```properties
-storeFile=/абсолютный/путь/release.jks
-storePassword=...
-keyAlias=...
-keyPassword=...
+- `KEYSTORE_FILE` — путь к хранилищу `.jks` или `.keystore`
+- `KEYSTORE_PASSWORD`
+- `KEY_ALIAS`
+- `KEY_PASSWORD`
+
+```bash
+export KEYSTORE_FILE=/абсолютный/путь/release.jks
+export KEYSTORE_PASSWORD=...
+export KEY_ALIAS=...
+export KEY_PASSWORD=...
+./gradlew assembleRelease
 ```
 
-Дальше в `app/build.gradle.kts` у типа `release` укажите `signingConfig` на это хранилище и снова выполните `./gradlew assembleRelease`. Пароли в репозиторий не кладите.
+Без `KEYSTORE_FILE` блок `signingConfig` не создаётся. Пароли и файл хранилища в репозиторий не кладите: `*.jks`, `*.keystore` и `keystore.properties` уже в `.gitignore`.
 
 Обёртка Gradle уже в репозитории: `gradlew`, `gradlew.bat`, `gradle/wrapper/`. Отдельно ставить Gradle не нужно.
 
@@ -182,11 +190,17 @@ keyPassword=...
 - `wmic` устарел и в новых сборках Windows 11 удалён. Рядом есть те же сведения через CIM и PowerShell.
 - Синтаксис `nc` зависит от сборки netcat. Для проверки порта в базе указан `ncat` из пакета nmap.
 - Поиск - это подстрока, а не исправление опечаток.
-- Release без своего хранилища не подписан и на телефон не ставится.
+- Release без переменной `KEYSTORE_FILE` не подписан и на телефон не ставится.
 - Интерфейс только тёмный и только на русском. Локализации интерфейса нет, описания команд тоже на русском.
+
+## F-Droid
+
+Сборка `assembleRelease` без `KEYSTORE_FILE` остаётся неподписанной: F-Droid собирает её сам и подписывает своим ключом. Тексты, значок и снимки карточки лежат в `fastlane/metadata/android/` (`ru` и `en-US`).
+
+Черновик метаданных для репозитория [fdroiddata](https://gitlab.com/fdroid/fdroiddata) — `docs/fdroid-metadata.yml`. В сборку приложения он не входит. В fdroiddata его кладут как `metadata/com.sysref.commands.yml` после тега `v1.0.0` на коммите, где `versionName` равен `1.0.0`, а `versionCode` равен `1`.
 
 ## Лицензия
 
 Код и тексты команд - [MIT](LICENSE).
 
-Шрифт JetBrains Mono распространяется по лицензии SIL Open Font License. Текст лицензии и авторы: `third_party/jetbrains-mono/`.
+Шрифт JetBrains Mono распространяется по лицензии SIL Open Font License 1.1 (OFL). Текст лицензии и авторы: `third_party/jetbrains-mono/`.
