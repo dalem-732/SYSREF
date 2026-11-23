@@ -1,0 +1,13 @@
+SYSREF is an offline, console-style reference of administrator commands for Linux distributions and Windows.
+
+The interface looks like a terminal: black background, monospace text, green and amber colors, and a prompt line. All 1739 commands are stored inside the APK. The app does not use the network and does not track you. Tap a row to copy the command to the clipboard.
+
+Search runs as you type. It matches the command text, the description, the section name, and the platform name, in Russian and English. Case is ignored, ё is treated as е, and a fragment matches inside a word. An exact command comes first, then a command that starts with the query, then a whole word inside the command, then any match inside the command, and only then a match in the description, section, or platform.
+
+Platform filters: all, linux, deb, rhel, suse, arch, cmd, and ps. A distribution filter keeps that distribution's own commands and the commands shared by Linux.
+
+Platforms: Debian/Ubuntu, RHEL/Fedora (Rocky and CentOS use the same set), openSUSE, Arch, commands common to Linux, Windows Command Prompt, and PowerShell.
+
+Sections include packages, services, firewall, network, network diagnostics, users, disks, LVM, files and directories, permissions, archives, text, processes, systemd, the scheduler, logs and security, the shell, remote access, Git, Docker, the system, boot and recovery, scheduled tasks, the registry, and AD/DNS/DHCP.
+
+Descriptions are short cards, not manual pages. The interface and the command descriptions are in Russian. When a tool is not part of a minimal install, the card says so.

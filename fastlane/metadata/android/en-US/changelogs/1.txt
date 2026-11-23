@@ -1,0 +1,1 @@
+First release: offline console-style reference of Linux and Windows administration commands, with substring search in Russian and English, platform filters, and tap to copy. No network and no tracking.
