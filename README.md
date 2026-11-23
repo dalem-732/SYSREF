@@ -76,6 +76,7 @@ tools/build_commands.py             сборка JSON и проверка дуб
 docs/screenshots/                   снимки экрана для README
 fastlane/metadata/android/          тексты, значок и снимки для F-Droid
 docs/fdroid-metadata.yml            черновик метаданных fdroiddata, в сборку не входит
+docs/fdroid-inclusion.md            как повторить подготовку к F-Droid
 ```
 
 Приложение не обращается к Python. Скрипт нужен только чтобы править базу и заново собрать JSON.
@@ -197,7 +198,7 @@ export KEY_PASSWORD=...
 
 Сборка `assembleRelease` без `KEYSTORE_FILE` остаётся неподписанной: F-Droid собирает её сам и подписывает своим ключом. Тексты, значок и снимки карточки лежат в `fastlane/metadata/android/` (`ru` и `en-US`).
 
-Черновик метаданных для репозитория [fdroiddata](https://gitlab.com/fdroid/fdroiddata) — `docs/fdroid-metadata.yml`. В сборку приложения он не входит. В fdroiddata его кладут как `metadata/com.sysref.commands.yml` после тега `v1.0.0` на коммите, где `versionName` равен `1.0.0`, а `versionCode` равен `1`.
+Черновик метаданных для репозитория [fdroiddata](https://gitlab.com/fdroid/fdroiddata) — `docs/fdroid-metadata.yml`. В сборку приложения он не входит. В fdroiddata его кладут как `metadata/com.sysref.commands.yml` после тега `v1.0.0` на коммите, где `versionName` равен `1.0.0`, а `versionCode` равен `1`. Как повторить подготовку: [docs/fdroid-inclusion.md](docs/fdroid-inclusion.md).
 
 ## Лицензия
 
