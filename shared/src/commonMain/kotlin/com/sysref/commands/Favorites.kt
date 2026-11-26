@@ -1,7 +1,5 @@
 package com.sysref.commands
 
-import android.content.Context
-
 fun toggleFavorite(favorites: Set<String>, id: String): Set<String> =
     if (id in favorites) favorites - id else favorites + id
 
@@ -24,18 +22,20 @@ fun filterCommands(
     return searchCommands(pool, query, filter)
 }
 
-/** Favorites live only on the device, in app-private SharedPreferences. */
-class FavoritesStore(context: Context) {
-    private val prefs = context.applicationContext
-        .getSharedPreferences("favorites", Context.MODE_PRIVATE)
+/**
+ * Where favorites are kept. Android uses app-private SharedPreferences,
+ * desktop uses a small JSON file in the user's config directory.
+ */
+interface FavoritesStorage {
+    fun load(): Set<String>
+    fun save(favorites: Set<String>)
+}
 
-    fun load(): Set<String> = prefs.getStringSet(KEY, emptySet())?.toSet() ?: emptySet()
-
-    fun save(favorites: Set<String>) {
-        prefs.edit().putStringSet(KEY, favorites.toSet()).apply()
-    }
-
-    private companion object {
-        const val KEY = "ids"
+/** In-memory storage for previews and tests. */
+class MemoryFavoritesStorage(initial: Set<String> = emptySet()) : FavoritesStorage {
+    private var favorites = initial
+    override fun load(): Set<String> = favorites
+    override fun save(favorites: Set<String>) {
+        this.favorites = favorites.toSet()
     }
 }

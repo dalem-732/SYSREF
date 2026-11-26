@@ -15,4 +15,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "sysadmin-commands"
-include(":app")
+include(":app", ":shared", ":desktop")

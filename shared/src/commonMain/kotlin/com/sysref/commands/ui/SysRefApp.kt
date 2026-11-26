@@ -1,9 +1,5 @@
 package com.sysref.commands.ui
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -50,11 +46,12 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -65,7 +62,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sysref.commands.CommandEntry
-import com.sysref.commands.FavoritesStore
+import com.sysref.commands.FavoritesStorage
+import com.sysref.commands.loadCommands
 import com.sysref.commands.filterCommands
 import com.sysref.commands.Platform
 import com.sysref.commands.browsePlatforms
@@ -76,6 +74,9 @@ import com.sysref.commands.platformById
 import com.sysref.commands.pluralCommands
 import com.sysref.commands.pluralMatches
 import com.sysref.commands.toggleFavorite
+import androidx.compose.runtime.produceState
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 
 private data class FilterChip(val id: String, val label: String)
@@ -91,16 +92,59 @@ private val filterChips = listOf(
     FilterChip("ps", "ps"),
 )
 
+private sealed interface LoadState {
+    data object Loading : LoadState
+    data class Ready(val commands: List<CommandEntry>) : LoadState
+    data class Failed(val message: String) : LoadState
+}
+
+/** Entry point shared by Android and desktop: loads the database, applies the theme, shows the app. */
 @Composable
-fun SysRefApp(
-    commands: List<CommandEntry>?,
-    loadError: String? = null,
+fun SysRefRoot(
+    favoritesStorage: FavoritesStorage,
     initialMode: String = "browse",
     initialPlatform: String? = null,
     initialCategory: String? = null,
     initialQuery: String = "",
     initialFilter: String = "all",
     initialFavoritesOnly: Boolean = false,
+    shortcuts: Flow<AppShortcut> = emptyFlow(),
+) {
+    val state by produceState<LoadState>(LoadState.Loading) {
+        value = try {
+            LoadState.Ready(loadCommands())
+        } catch (error: Exception) {
+            LoadState.Failed(error.message ?: error::class.simpleName.orEmpty())
+        }
+    }
+    SysRefTheme {
+        SysRefApp(
+            commands = (state as? LoadState.Ready)?.commands,
+            loadError = (state as? LoadState.Failed)?.message,
+            favoritesStorage = favoritesStorage,
+            initialMode = initialMode,
+            initialPlatform = initialPlatform,
+            initialCategory = initialCategory,
+            initialQuery = initialQuery,
+            initialFilter = initialFilter,
+            initialFavoritesOnly = initialFavoritesOnly,
+            shortcuts = shortcuts,
+        )
+    }
+}
+
+@Composable
+fun SysRefApp(
+    commands: List<CommandEntry>?,
+    loadError: String? = null,
+    favoritesStorage: FavoritesStorage,
+    initialMode: String = "browse",
+    initialPlatform: String? = null,
+    initialCategory: String? = null,
+    initialQuery: String = "",
+    initialFilter: String = "all",
+    initialFavoritesOnly: Boolean = false,
+    shortcuts: Flow<AppShortcut> = emptyFlow(),
 ) {
     var mode by rememberSaveable { mutableStateOf(initialMode) }
     var platformId by rememberSaveable { mutableStateOf(initialPlatform) }
@@ -110,11 +154,12 @@ fun SysRefApp(
     var favoritesOnly by rememberSaveable { mutableStateOf(initialFavoritesOnly) }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
-    val favoritesStore = remember { FavoritesStore(context) }
-    var favorites by remember { mutableStateOf(favoritesStore.load()) }
+    val clipboard = LocalClipboardManager.current
+    var favorites by remember { mutableStateOf(favoritesStorage.load()) }
+    // Bumped by Ctrl+F; SearchPane focuses the query field when it changes.
+    var focusSearchTick by remember { mutableStateOf(0) }
 
-    BackHandler(enabled = mode == "search" || platformId != null) {
+    fun goBack() {
         when {
             mode == "search" -> mode = "browse"
             categoryId != null -> categoryId = null
@@ -122,9 +167,23 @@ fun SysRefApp(
         }
     }
 
+    SystemBackHandler(enabled = mode == "search" || platformId != null) { goBack() }
+
+    LaunchedEffect(shortcuts) {
+        shortcuts.collect { shortcut ->
+            when (shortcut) {
+                AppShortcut.FocusSearch -> {
+                    mode = "search"
+                    focusSearchTick++
+                }
+                AppShortcut.Escape ->
+                    if (mode == "search" && query.isNotEmpty()) query = "" else goBack()
+            }
+        }
+    }
+
     fun copy(command: String) {
-        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        clipboard.setPrimaryClip(ClipData.newPlainText("command", command))
+        clipboard.setText(AnnotatedString(command))
         scope.launch {
             snackbar.currentSnackbarData?.dismiss()
             snackbar.showSnackbar("скопировано: $command")
@@ -134,7 +193,7 @@ fun SysRefApp(
     fun toggleStar(entry: CommandEntry) {
         val added = entry.id !in favorites
         favorites = toggleFavorite(favorites, entry.id)
-        favoritesStore.save(favorites)
+        favoritesStorage.save(favorites)
         scope.launch {
             snackbar.currentSnackbarData?.dismiss()
             snackbar.showSnackbar(if (added) "★ в избранном: ${entry.command}" else "убрано из избранного: ${entry.command}")
@@ -168,6 +227,7 @@ fun SysRefApp(
                         favorites = favorites,
                         onToggleFavorite = ::toggleStar,
                         onCopy = ::copy,
+                        focusSearchTick = focusSearchTick,
                     )
                     platformId == null -> PlatformPane(
                         commands = commands,
@@ -444,13 +504,17 @@ private fun SearchPane(
     favorites: Set<String>,
     onToggleFavorite: (CommandEntry) -> Unit,
     onCopy: (String) -> Unit,
+    focusSearchTick: Int = 0,
 ) {
     val focus = remember { FocusRequester() }
     val results = remember(commands, query, filter, favorites, favoritesOnly) {
         filterCommands(commands, query, filter, favorites, favoritesOnly)
     }
     LaunchedEffect(Unit) {
-        if (query.isEmpty() && !favoritesOnly) focus.requestFocus()
+        if (query.isEmpty() && !favoritesOnly) runCatching { focus.requestFocus() }
+    }
+    LaunchedEffect(focusSearchTick) {
+        if (focusSearchTick > 0) runCatching { focus.requestFocus() }
     }
     Column(Modifier.fillMaxSize()) {
         PromptField(query = query, onQuery = onQuery, focusRequester = focus)
