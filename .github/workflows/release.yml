@@ -37,7 +37,8 @@ jobs:
           ./gradlew :app:assembleRelease
 
       - name: Rename APK
-        run: cp app/build/outputs/apk/release/*.apk sysref-${{ github.ref_name }}.apk
+        # ref_name is the tag (v1.2.0) or, for manual runs, a branch that may contain "/".
+        run: cp app/build/outputs/apk/release/*.apk "sysref-${GITHUB_REF_NAME//\//-}.apk"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -71,7 +72,7 @@ jobs:
           mkdir -p dist
           cp desktop/build/compose/binaries/main/deb/*.deb dist/
           cp desktop/build/compose/binaries/main/rpm/*.rpm dist/
-          tar -C desktop/build/compose/binaries/main/app -czf dist/sysref-${{ github.ref_name }}-linux-x64.tar.gz SYSREF
+          tar -C desktop/build/compose/binaries/main/app -czf "dist/sysref-${GITHUB_REF_NAME//\//-}-linux-x64.tar.gz" SYSREF
           ls -la dist
 
       - uses: actions/upload-artifact@v4
