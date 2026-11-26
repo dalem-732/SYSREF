@@ -467,6 +467,8 @@ private fun SearchPane(
                 CenterNote("избранное пока пусто\n\nнажмите ☆ справа от команды,\nчтобы она появилась здесь")
             !favoritesOnly && blank ->
                 CenterNote("введите фрагмент команды\nили слово на русском\n\nпримеры:  journalctl\n          файрвол\n          robocopy")
+            results.isEmpty() && favoritesOnly && blank ->
+                CenterNote("в избранном нет команд\nдля этой платформы\n\nвыберите чип «все»")
             results.isEmpty() && favoritesOnly ->
                 CenterNote("в избранном нет совпадений\n\nснимите фильтр ★ избранное,\nчтобы искать по всей базе")
             results.isEmpty() -> CenterNote("нет совпадений")
