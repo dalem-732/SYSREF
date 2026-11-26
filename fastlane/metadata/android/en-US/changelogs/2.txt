@@ -1,0 +1,1 @@
+Favorites: a ☆ star on every command, a "★ избранное" (favorites) filter in search that combines with the query and platform filters, and a "★ Избранное" entry on the main screen. Favorites are stored on the device only.

@@ -6,7 +6,14 @@ data class CommandEntry(
     val platform: String,
     val category: String,
     val index: Int,
-)
+) {
+    /**
+     * Stable key for favorites. Built from the entry content, not from its position,
+     * so favorites survive reordering or new commands in commands.json.
+     * platform + category + command is unique (checked by tools/build_commands.py).
+     */
+    val id: String get() = "$platform/$category/$command"
+}
 
 enum class Platform(
     val id: String,
@@ -178,6 +185,17 @@ fun pluralMatches(count: Int): String {
         mod10 == 1 && mod100 != 11 -> "совпадение"
         mod10 in 2..4 && mod100 !in 12..14 -> "совпадения"
         else -> "совпадений"
+    }
+    return "$count $word"
+}
+
+fun pluralCommands(count: Int): String {
+    val mod10 = count % 10
+    val mod100 = count % 100
+    val word = when {
+        mod10 == 1 && mod100 != 11 -> "команда"
+        mod10 in 2..4 && mod100 !in 12..14 -> "команды"
+        else -> "команд"
     }
     return "$count $word"
 }

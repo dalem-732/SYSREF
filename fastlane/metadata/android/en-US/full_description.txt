@@ -6,6 +6,8 @@ Search runs as you type. It matches the command text, the description, the secti
 
 Platform filters: all, linux, deb, rhel, suse, arch, cmd, and ps. A distribution filter keeps that distribution's own commands and the commands shared by Linux.
 
+Favorites: tap the star next to a command to save it, and use the favorites chip to show only saved commands, together with search and platform filters. Favorites are stored on the device only.
+
 Platforms: Debian/Ubuntu, RHEL/Fedora (Rocky and CentOS use the same set), openSUSE, Arch, commands common to Linux, Windows Command Prompt, and PowerShell.
 
 Sections include packages, services, firewall, network, network diagnostics, users, disks, LVM, files and directories, permissions, archives, text, processes, systemd, the scheduler, logs and security, the shell, remote access, Git, Docker, the system, boot and recovery, scheduled tasks, the registry, and AD/DNS/DHCP.

@@ -102,6 +102,14 @@ if len(entries) < 400:
 
 OUT.parent.mkdir(parents=True, exist_ok=True)
 payload = {"version": 1, "commands": entries}
+# The app keys favorites by platform/category/command, so that triple must be unique.
+_seen = set()
+for _item in entries:
+    _key = (_item["platform"], _item["category"], _item["command"])
+    if _key in _seen:
+        raise SystemExit(f"duplicate command id {'/'.join(_key)}")
+    _seen.add(_key)
+
 OUT.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 from collections import Counter
