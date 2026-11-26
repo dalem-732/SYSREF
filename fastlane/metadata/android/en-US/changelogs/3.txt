@@ -1,0 +1,1 @@
+Desktop version: SYSREF is now available for Windows (MSI) and Linux (DEB, RPM, tar.gz) with the same search, filters and favorites. On Android the app now uses shared code internally; favorites are kept when you update.

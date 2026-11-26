@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "app" / "src" / "main" / "assets" / "commands.json"
+OUT = ROOT / "shared" / "src" / "commonMain" / "composeResources" / "files" / "commands.json"
 
 PLATFORMS = {"debian", "rhel", "suse", "arch", "linux", "cmd", "ps"}
 CATEGORIES = {

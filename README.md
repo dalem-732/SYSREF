@@ -6,6 +6,8 @@
 
 Идентификатор приложения: `com.sysref.commands`.
 
+С версии 1.2.0 есть и десктопная версия для Windows и Linux с тем же интерфейсом, базой и избранным, см. [Десктоп (Windows/Linux)](#десктоп-windowslinux).
+
 ## Скриншоты
 
 Список платформ. Сверху пункт «★ Избранное» со счётчиком сохранённых команд:
@@ -27,6 +29,40 @@
 Включён чип «★ избранное»: без запроса показываются все избранные команды. Чип работает вместе с запросом и фильтром платформы:
 
 ![Избранное](docs/screenshots/search-favorites.png)
+
+Десктопная версия (Linux): справочник со звёздочками и поиск с включённым чипом «★ избранное»:
+
+![SYSREF на Linux: пакеты](docs/screenshots/desktop-packages.png)
+![SYSREF на Linux: избранное](docs/screenshots/desktop-favorites.png)
+
+## Десктоп (Windows/Linux)
+
+Десктопная версия собрана из того же кода, что и Android-приложение (Compose Multiplatform). Внутри та же база команд, тот же поиск, фильтры и избранное. Установщики лежат в [Releases](https://github.com/dalem-732/SYSREF/releases/latest). Внутри у каждого своя Java, поэтому отдельно ставить её не нужно. Размер 50–65 МБ.
+
+**Windows 10/11:** скачайте `SYSREF-<версия>.msi` и запустите. Ставится для текущего пользователя, права администратора не нужны. Ярлык появится в меню «Пуск» и на рабочем столе. Установщик не подписан платным сертификатом, поэтому Windows SmartScreen может показать «Система Windows защитила ваш компьютер». Нажмите **Подробнее → Выполнить в любом случае**. Новая версия ставится поверх старой.
+
+**Debian/Ubuntu:**
+
+```bash
+sudo apt install ./sysref_*.deb
+```
+
+Пакет собран на Ubuntu 24.04 и ссылается на её библиотеки (`libasound2t64` и т. п.), поэтому нужна Ubuntu 24.04+, Debian 13+ или их производные. На более старых системах берите архив `.tar.gz` (ниже).
+
+**Fedora/RHEL/openSUSE:**
+
+```bash
+sudo dnf install ./sysref-*.rpm      # Fedora, RHEL, Rocky
+sudo zypper install ./sysref-*.rpm   # openSUSE
+```
+
+**Любой Linux x86_64 без установки:** распакуйте `sysref-v<версия>-linux-x64.tar.gz` и запустите `SYSREF/bin/SYSREF`.
+
+После установки из пакета программа лежит в `/opt/sysref/` и есть в меню приложений, запуск из терминала: `/opt/sysref/bin/SYSREF`. Удаление: `sudo apt remove sysref` или `sudo dnf remove sysref`, на Windows через «Приложения».
+
+Управление: мышь и клавиатура. **Ctrl+F** открывает поиск и ставит курсор в строку запроса. **Esc** очищает запрос, а если он пуст, возвращает на шаг назад. Щелчок по команде копирует её в буфер обмена, ☆ добавляет команду в избранное.
+
+Избранное хранится в файле пользователя: на Windows `%APPDATA%\SYSREF\favorites.json`, на Linux `~/.config/sysref/favorites.json` (или `$XDG_CONFIG_HOME/sysref/`). С телефоном оно не синхронизируется.
 
 ## Возможности
 
@@ -58,7 +94,9 @@
 
 ## Стек
 
-- Kotlin 2.0, Jetpack Compose, Material 3
+- Kotlin 2.0, Jetpack Compose / Compose Multiplatform 1.7, Material 3
+- Модули: `shared` (Kotlin Multiplatform: Android + JVM desktop), `app` (Android), `desktop` (Windows/Linux)
+- kotlinx.serialization для чтения базы, Compose Multiplatform Resources для базы и шрифта
 - Android Gradle Plugin 8.7.3, Gradle 8.11.1
 - `minSdk` 24, `targetSdk` 35, `compileSdk` 35
 - Байткод Java/Kotlin: 17
@@ -68,14 +106,21 @@
 ## Структура
 
 ```text
-app/src/main/assets/commands.json   база, которую читает приложение
-app/src/main/java/com/sysref/commands/
-    MainActivity.kt                 загрузка базы и параметры запуска
-    Model.kt                        платформы, разделы, ранжирование поиска
-    Favorites.kt                    избранное: фильтр и хранение на устройстве
-    Repository.kt                   разбор JSON из assets
-    ui/SysRefApp.kt                 справочник, поиск, копирование, избранное
-    ui/Theme.kt                     цвета терминала и шрифт
+shared/                             общий код Android и десктопа (Kotlin Multiplatform)
+    src/commonMain/composeResources/files/commands.json   база команд
+    src/commonMain/composeResources/font/                 JetBrains Mono
+    src/commonMain/kotlin/com/sysref/commands/
+        Model.kt                    платформы, разделы, ранжирование поиска
+        Favorites.kt                избранное: фильтр и интерфейс хранилища
+        CommandRepository.kt        чтение commands.json
+        ui/SysRefApp.kt             справочник, поиск, копирование, избранное
+        ui/Theme.kt                 цвета терминала и шрифт
+        ui/Platform.kt              системная «назад» и горячие клавиши
+    src/androidMain/                избранное в SharedPreferences, BackHandler
+    src/desktopMain/                избранное в JSON-файле пользователя
+    src/commonTest/, src/desktopTest/   unit-тесты
+app/                                Android-приложение (MainActivity, манифест, значок, подпись)
+desktop/                            окно, Ctrl+F/Esc, упаковка MSI/DEB/RPM, значки
 tools/entries_linux.py              исходные записи Linux
 tools/entries_windows.py            исходные записи Windows
 tools/build_commands.py             сборка JSON и проверка дублей
@@ -119,7 +164,7 @@ docs/fdroid-inclusion.md            как повторить подготовк
 python3 tools/build_commands.py
 ```
 
-Скрипт пишет `app/src/main/assets/commands.json`, не пускает пустые поля и одинаковые тройки платформа + раздел + команда. Общая команда Linux с тем же текстом, что и у дистрибутива, в выдаче дистрибутива остаётся один раз.
+Скрипт пишет `shared/src/commonMain/composeResources/files/commands.json`, не пускает пустые поля и одинаковые тройки платформа + раздел + команда. Общая команда Linux с тем же текстом, что и у дистрибутива, в выдаче дистрибутива остаётся один раз.
 
 Править JSON руками тоже можно. После ручной правки генератор при следующем запуске перезапишет файл из Python-исходников.
 
@@ -143,10 +188,22 @@ app/build/outputs/apk/debug/app-debug.apk
 
 ```bash
 export ANDROID_HOME="$HOME/Android/Sdk"   # или путь к вашему SDK
-./gradlew assembleDebug
-./gradlew assembleRelease
-./gradlew testDebugUnitTest
+./gradlew :app:assembleDebug
+./gradlew :app:assembleRelease
+./gradlew :shared:desktopTest :shared:testDebugUnitTest   # unit-тесты общего кода
 ```
+
+Десктоп (нужен JDK 17+ с `jpackage`, например Temurin):
+
+```bash
+./gradlew :desktop:run                 # запустить окно
+./gradlew :desktop:packageDeb          # Linux .deb (нужен fakeroot)
+./gradlew :desktop:packageRpm          # Linux .rpm (нужен rpmbuild, пакет rpm)
+./gradlew :desktop:packageMsi          # Windows .msi, только на Windows (WiX скачивается сам)
+./gradlew :desktop:createDistributable # папка с программой без установщика
+```
+
+Готовые пакеты лежат в `desktop/build/compose/binaries/main/`. Установщик собирается только под ту ОС, на которой запущена сборка. В релизах их собирает GitHub Actions: Linux на `ubuntu-latest`, MSI на `windows-latest`.
 
 На Windows те же задачи запускает `gradlew.bat`.
 
@@ -198,11 +255,12 @@ export KEY_PASSWORD=...
 - Синтаксис `nc` зависит от сборки netcat. Для проверки порта в базе указан `ncat` из пакета nmap.
 - Поиск - это подстрока, а не исправление опечаток.
 - Release без переменной `KEYSTORE_FILE` не подписан и на телефон не ставится.
+- Десктопные установщики не подписаны: на Windows возможно предупреждение SmartScreen. `.deb` рассчитан на Ubuntu 24.04+/Debian 13+, для старых систем есть `.tar.gz`. Сборок для macOS и ARM нет.
 - Интерфейс только тёмный и только на русском. Локализации интерфейса нет, описания команд тоже на русском.
 
 ## F-Droid
 
-Сборка `assembleRelease` без `KEYSTORE_FILE` остаётся неподписанной: F-Droid собирает её сам и подписывает своим ключом. Тексты, значок и снимки карточки лежат в `fastlane/metadata/android/` (`ru` и `en-US`).
+F-Droid собирает только Android-модуль `app` (`subdir: app`). Модули `shared` и `desktop` ему не мешают, все зависимости берутся из Google Maven и Maven Central. Сборка `assembleRelease` без `KEYSTORE_FILE` остаётся неподписанной: F-Droid собирает её сам и подписывает своим ключом. Тексты, значок и снимки карточки лежат в `fastlane/metadata/android/` (`ru` и `en-US`).
 
 Черновик метаданных для репозитория [fdroiddata](https://gitlab.com/fdroid/fdroiddata) — `docs/fdroid-metadata.yml`. В сборку приложения он не входит. В fdroiddata его кладут как `metadata/com.sysref.commands.yml` после тега `v1.0.0` на коммите, где `versionName` равен `1.0.0`, а `versionCode` равен `1`. Как повторить подготовку: [docs/fdroid-inclusion.md](docs/fdroid-inclusion.md).
 

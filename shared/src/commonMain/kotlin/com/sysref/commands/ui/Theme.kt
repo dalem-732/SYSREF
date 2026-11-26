@@ -7,11 +7,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import com.sysref.commands.R
+import com.sysref.commands.resources.Res
+import com.sysref.commands.resources.jetbrains_mono_bold
+import com.sysref.commands.resources.jetbrains_mono_regular
+import org.jetbrains.compose.resources.Font
 
 val TermBg = Color(0xFF000000)
 val TermPanel = Color(0xFF071008)
@@ -22,10 +24,12 @@ val PhosphorMuted = Color(0xFF8FCB9C)
 val Amber = Color(0xFFFFB000)
 val Line = Color(0xFF16331C)
 
-val Mono = FontFamily(
-    Font(R.font.jetbrains_mono_regular, FontWeight.Normal),
-    Font(R.font.jetbrains_mono_bold, FontWeight.Bold),
-)
+// JetBrains Mono ships as a Compose Multiplatform resource, so Android and desktop use the same files.
+val Mono: FontFamily
+    @Composable get() = FontFamily(
+        Font(Res.font.jetbrains_mono_regular, FontWeight.Normal),
+        Font(Res.font.jetbrains_mono_bold, FontWeight.Bold),
+    )
 
 private val Scheme = darkColorScheme(
     background = TermBg,
@@ -38,7 +42,8 @@ private val Scheme = darkColorScheme(
     onSurface = Phosphor,
 )
 
-private val Type = Typography(
+@Composable
+private fun typography() = Typography(
     bodyLarge = TextStyle(fontFamily = Mono, fontSize = 16.sp, color = Phosphor),
     bodyMedium = TextStyle(fontFamily = Mono, fontSize = 14.sp, color = Phosphor),
     labelLarge = TextStyle(fontFamily = Mono, fontSize = 14.sp, color = Amber),
@@ -46,7 +51,7 @@ private val Type = Typography(
 
 @Composable
 fun SysRefTheme(content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = Scheme, typography = Type) {
+    MaterialTheme(colorScheme = Scheme, typography = typography()) {
         CompositionLocalProvider(
             androidx.compose.material3.LocalTextStyle provides TextStyle(
                 fontFamily = Mono,
