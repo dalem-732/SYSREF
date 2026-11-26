@@ -24,11 +24,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.SnackbarHost
@@ -49,6 +51,10 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -59,14 +65,17 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sysref.commands.CommandEntry
+import com.sysref.commands.FavoritesStore
+import com.sysref.commands.filterCommands
 import com.sysref.commands.Platform
 import com.sysref.commands.browsePlatforms
 import com.sysref.commands.categoryById
 import com.sysref.commands.foldRu
 import com.sysref.commands.inBrowse
 import com.sysref.commands.platformById
+import com.sysref.commands.pluralCommands
 import com.sysref.commands.pluralMatches
-import com.sysref.commands.searchCommands
+import com.sysref.commands.toggleFavorite
 import kotlinx.coroutines.launch
 
 private data class FilterChip(val id: String, val label: String)
@@ -91,15 +100,19 @@ fun SysRefApp(
     initialCategory: String? = null,
     initialQuery: String = "",
     initialFilter: String = "all",
+    initialFavoritesOnly: Boolean = false,
 ) {
     var mode by rememberSaveable { mutableStateOf(initialMode) }
     var platformId by rememberSaveable { mutableStateOf(initialPlatform) }
     var categoryId by rememberSaveable { mutableStateOf(initialCategory) }
     var query by rememberSaveable { mutableStateOf(initialQuery) }
     var filter by rememberSaveable { mutableStateOf(initialFilter) }
+    var favoritesOnly by rememberSaveable { mutableStateOf(initialFavoritesOnly) }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val favoritesStore = remember { FavoritesStore(context) }
+    var favorites by remember { mutableStateOf(favoritesStore.load()) }
 
     BackHandler(enabled = mode == "search" || platformId != null) {
         when {
@@ -115,6 +128,16 @@ fun SysRefApp(
         scope.launch {
             snackbar.currentSnackbarData?.dismiss()
             snackbar.showSnackbar("скопировано: $command")
+        }
+    }
+
+    fun toggleStar(entry: CommandEntry) {
+        val added = entry.id !in favorites
+        favorites = toggleFavorite(favorites, entry.id)
+        favoritesStore.save(favorites)
+        scope.launch {
+            snackbar.currentSnackbarData?.dismiss()
+            snackbar.showSnackbar(if (added) "★ в избранном: ${entry.command}" else "убрано из избранного: ${entry.command}")
         }
     }
 
@@ -140,11 +163,20 @@ fun SysRefApp(
                         onQuery = { query = it },
                         filter = filter,
                         onFilter = { filter = it },
+                        favoritesOnly = favoritesOnly,
+                        onFavoritesOnly = { favoritesOnly = it },
+                        favorites = favorites,
+                        onToggleFavorite = ::toggleStar,
                         onCopy = ::copy,
                     )
                     platformId == null -> PlatformPane(
                         commands = commands,
+                        favoritesCount = commands.count { it.id in favorites },
                         onOpen = { platformId = it },
+                        onOpenFavorites = {
+                            favoritesOnly = true
+                            mode = "search"
+                        },
                     )
                     categoryId == null -> CategoryPane(
                         commands = commands,
@@ -157,6 +189,8 @@ fun SysRefApp(
                         platformId = platformId!!,
                         categoryId = categoryId!!,
                         onBack = { categoryId = null },
+                        favorites = favorites,
+                        onToggleFavorite = ::toggleStar,
                         onCopy = ::copy,
                     )
                 }
@@ -259,9 +293,35 @@ private fun CenterNote(text: String) {
 }
 
 @Composable
-private fun PlatformPane(commands: List<CommandEntry>, onOpen: (String) -> Unit) {
+private fun PlatformPane(
+    commands: List<CommandEntry>,
+    favoritesCount: Int,
+    onOpen: (String) -> Unit,
+    onOpenFavorites: () -> Unit,
+) {
     LazyColumn(Modifier.fillMaxSize()) {
         item { Hint("// выберите платформу") }
+        item(key = "favorites") {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onOpenFavorites)
+                    .padding(horizontal = 14.dp, vertical = 10.dp)
+                    .heightIn(min = 48.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    "> ★ Избранное",
+                    color = Amber,
+                    fontFamily = Mono,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    modifier = Modifier.weight(1f),
+                )
+                Text("$favoritesCount", color = Amber, fontFamily = Mono, fontSize = 13.sp)
+            }
+            Rule()
+        }
         items(browsePlatforms, key = { it.id }) { platform ->
             val count = commands.count { inBrowse(it, platform.id) }
             Column(
@@ -344,6 +404,8 @@ private fun CommandPane(
     platformId: String,
     categoryId: String,
     onBack: () -> Unit,
+    favorites: Set<String>,
+    onToggleFavorite: (CommandEntry) -> Unit,
     onCopy: (String) -> Unit,
 ) {
     val platform = platformById(platformId)
@@ -358,7 +420,13 @@ private fun CommandPane(
             Hint("// нажмите на команду — она попадёт в буфер")
         }
         items(rows, key = { "${it.index}-${it.platform}" }) { entry ->
-            CommandBlock(entry, query = "", onCopy = onCopy)
+            CommandBlock(
+                entry,
+                query = "",
+                onCopy = onCopy,
+                favorite = entry.id in favorites,
+                onToggleFavorite = { onToggleFavorite(entry) },
+            )
             Rule()
         }
     }
@@ -371,26 +439,55 @@ private fun SearchPane(
     onQuery: (String) -> Unit,
     filter: String,
     onFilter: (String) -> Unit,
+    favoritesOnly: Boolean,
+    onFavoritesOnly: (Boolean) -> Unit,
+    favorites: Set<String>,
+    onToggleFavorite: (CommandEntry) -> Unit,
     onCopy: (String) -> Unit,
 ) {
     val focus = remember { FocusRequester() }
-    val results = remember(commands, query, filter) { searchCommands(commands, query, filter) }
+    val results = remember(commands, query, filter, favorites, favoritesOnly) {
+        filterCommands(commands, query, filter, favorites, favoritesOnly)
+    }
     LaunchedEffect(Unit) {
-        if (query.isEmpty()) focus.requestFocus()
+        if (query.isEmpty() && !favoritesOnly) focus.requestFocus()
     }
     Column(Modifier.fillMaxSize()) {
         PromptField(query = query, onQuery = onQuery, focusRequester = focus)
-        FilterRow(selected = filter, onSelect = onFilter)
+        FilterRow(
+            selected = filter,
+            onSelect = onFilter,
+            favoritesOnly = favoritesOnly,
+            onFavoritesOnly = onFavoritesOnly,
+        )
         Rule()
-        if (query.trim().isEmpty()) {
-            CenterNote("введите фрагмент команды\nили слово на русском\n\nпримеры:  journalctl\n          файрвол\n          robocopy")
-        } else if (results.isEmpty()) {
-            CenterNote("нет совпадений")
-        } else {
-            LazyColumn(Modifier.fillMaxSize()) {
-                item { Hint("// ${pluralMatches(results.size)}") }
-                items(results, key = { "${it.index}-${it.platform}-${it.category}" }) { entry ->
-                    CommandBlock(entry, query = query.trim(), onCopy = onCopy, showMeta = true)
+        val blank = query.trim().isEmpty()
+        when {
+            favoritesOnly && favorites.isEmpty() ->
+                CenterNote("избранное пока пусто\n\nнажмите ☆ справа от команды,\nчтобы она появилась здесь")
+            !favoritesOnly && blank ->
+                CenterNote("введите фрагмент команды\nили слово на русском\n\nпримеры:  journalctl\n          файрвол\n          robocopy")
+            results.isEmpty() && favoritesOnly && blank ->
+                CenterNote("в избранном нет команд\nдля этой платформы\n\nвыберите чип «все»")
+            results.isEmpty() && favoritesOnly ->
+                CenterNote("в избранном нет совпадений\n\nснимите фильтр ★ избранное,\nчтобы искать по всей базе")
+            results.isEmpty() -> CenterNote("нет совпадений")
+            else -> LazyColumn(Modifier.fillMaxSize()) {
+                item {
+                    Hint(
+                        if (favoritesOnly && blank) "// ★ избранное: ${pluralCommands(results.size)}"
+                        else "// ${pluralMatches(results.size)}",
+                    )
+                }
+                items(results, key = { it.id }) { entry ->
+                    CommandBlock(
+                        entry,
+                        query = query.trim(),
+                        onCopy = onCopy,
+                        showMeta = true,
+                        favorite = entry.id in favorites,
+                        onToggleFavorite = { onToggleFavorite(entry) },
+                    )
                     Rule()
                 }
             }
@@ -445,7 +542,12 @@ private fun PromptField(
 }
 
 @Composable
-private fun FilterRow(selected: String, onSelect: (String) -> Unit) {
+private fun FilterRow(
+    selected: String,
+    onSelect: (String) -> Unit,
+    favoritesOnly: Boolean,
+    onFavoritesOnly: (Boolean) -> Unit,
+) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -453,6 +555,19 @@ private fun FilterRow(selected: String, onSelect: (String) -> Unit) {
             .padding(horizontal = 14.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
+        // Works on top of the platform chip and the query, so it is a toggle, not one more radio chip.
+        Text(
+            text = "★ избранное",
+            color = if (favoritesOnly) Color.Black else Amber,
+            fontFamily = Mono,
+            fontSize = 12.sp,
+            modifier = Modifier
+                .background(if (favoritesOnly) Amber else Color.Transparent)
+                .border(1.dp, Amber)
+                .toggleable(value = favoritesOnly, role = Role.Checkbox, onValueChange = onFavoritesOnly)
+                .semantics { contentDescription = "Только избранное" }
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+        )
         filterChips.forEach { chip ->
             val on = chip.id == selected
             Text(
@@ -476,14 +591,51 @@ private fun CommandBlock(
     query: String,
     onCopy: (String) -> Unit,
     showMeta: Boolean = true,
+    favorite: Boolean = false,
+    onToggleFavorite: (() -> Unit)? = null,
+) {
+    Row(Modifier.fillMaxWidth()) {
+        CommandText(entry, query, onCopy, showMeta, Modifier.weight(1f))
+        if (onToggleFavorite != null) {
+            StarToggle(favorite = favorite, onToggle = onToggleFavorite)
+        }
+    }
+}
+
+@Composable
+private fun StarToggle(favorite: Boolean, onToggle: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(48.dp)
+            .toggleable(value = favorite, role = Role.Checkbox, onValueChange = { onToggle() })
+            .semantics {
+                contentDescription = if (favorite) "Убрать из избранного" else "Добавить в избранное"
+                stateDescription = if (favorite) "в избранном" else "не в избранном"
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = if (favorite) "★" else "☆",
+            color = if (favorite) Amber else PhosphorDim,
+            fontSize = 20.sp,
+        )
+    }
+}
+
+@Composable
+private fun CommandText(
+    entry: CommandEntry,
+    query: String,
+    onCopy: (String) -> Unit,
+    showMeta: Boolean,
+    modifier: Modifier,
 ) {
     val platform = platformById(entry.platform)
     val category = categoryById(entry.category)
     Column(
-        Modifier
-            .fillMaxWidth()
+        modifier
             .clickable { onCopy(entry.command) }
-            .padding(horizontal = 14.dp, vertical = 10.dp),
+            .padding(start = 14.dp, end = 4.dp, top = 10.dp, bottom = 10.dp),
     ) {
         Text(
             text = highlight(entry.command, query, Phosphor, Amber),

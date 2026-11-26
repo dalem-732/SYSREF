@@ -22,6 +22,7 @@ class MainActivity : ComponentActivity() {
         val category = intent.getStringExtra("category")
         val query = intent.getStringExtra("query").orEmpty()
         val filter = intent.getStringExtra("filter") ?: "all"
+        val favoritesOnly = intent.getBooleanExtra("favorites", false)
         setContent {
             val state by produceState<LoadState>(LoadState.Loading) {
                 value = try {
@@ -42,6 +43,7 @@ class MainActivity : ComponentActivity() {
                     initialCategory = category,
                     initialQuery = query,
                     initialFilter = filter,
+                    initialFavoritesOnly = favoritesOnly,
                 )
             }
         }
