@@ -23,6 +23,14 @@ import com.sysref.commands.browsePlatforms
 import com.sysref.commands.categoryById
 import com.sysref.commands.inBrowse
 import com.sysref.commands.platformById
+import com.sysref.commands.resources.Res
+import com.sysref.commands.resources.back
+import com.sysref.commands.resources.favorites_entry
+import com.sysref.commands.resources.hint_choose_platform
+import com.sysref.commands.resources.hint_section
+import com.sysref.commands.resources.hint_tap_to_copy
+import com.sysref.commands.resources.path
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun PlatformPane(
@@ -35,7 +43,7 @@ internal fun PlatformPane(
         browsePlatforms.associate { platform -> platform.id to commands.count { inBrowse(it, platform.id) } }
     }
     LazyColumn(Modifier.fillMaxSize()) {
-        item { Hint("// выберите платформу") }
+        item { Hint(stringResource(Res.string.hint_choose_platform)) }
         item(key = "favorites") {
             Row(
                 Modifier
@@ -46,7 +54,7 @@ internal fun PlatformPane(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    "> ★ Избранное",
+                    stringResource(Res.string.favorites_entry),
                     color = Amber,
                     fontFamily = Mono,
                     fontWeight = FontWeight.Bold,
@@ -67,7 +75,7 @@ internal fun PlatformPane(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        "> ${platform.title}",
+                        "> ${stringResource(platform.titleRes)}",
                         color = Phosphor,
                         fontFamily = Mono,
                         fontWeight = FontWeight.Bold,
@@ -77,7 +85,7 @@ internal fun PlatformPane(
                     Text("${counts[platform.id] ?: 0}", color = Amber, fontFamily = Mono, fontSize = 13.sp)
                 }
                 Text(
-                    platform.blurb,
+                    stringResource(platform.blurbRes),
                     color = PhosphorMuted,
                     fontFamily = Mono,
                     fontSize = 12.sp,
@@ -102,9 +110,9 @@ internal fun CategoryPane(
     val categories = remember(counts) { Category.entries.filter { it.id in counts } }
     LazyColumn(Modifier.fillMaxSize()) {
         item {
-            BackLine("< назад", onBack)
-            PathLine(platform.title)
-            Hint("// раздел")
+            BackLine(stringResource(Res.string.back), onBack)
+            PathLine(stringResource(platform.titleRes))
+            Hint(stringResource(Res.string.hint_section))
         }
         items(categories, key = { it.id }) { category ->
             Row(
@@ -116,7 +124,7 @@ internal fun CategoryPane(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    "> ${category.title}",
+                    "> ${stringResource(category.titleRes)}",
                     color = Phosphor,
                     fontFamily = Mono,
                     fontSize = 15.sp,
@@ -146,9 +154,9 @@ internal fun CommandPane(
     }
     LazyColumn(Modifier.fillMaxSize()) {
         item {
-            BackLine("< назад", onBack)
-            PathLine("${platform.title} / ${category.title}")
-            Hint("// нажмите на команду — она попадёт в буфер")
+            BackLine(stringResource(Res.string.back), onBack)
+            PathLine(stringResource(Res.string.path, stringResource(platform.titleRes), stringResource(category.titleRes)))
+            Hint(stringResource(Res.string.hint_tap_to_copy))
         }
         items(rows, key = { it.id }) { entry ->
             CommandBlock(

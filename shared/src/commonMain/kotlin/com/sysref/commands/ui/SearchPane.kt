@@ -38,8 +38,19 @@ import androidx.compose.ui.unit.sp
 import com.sysref.commands.CommandEntry
 import com.sysref.commands.SearchFilter
 import com.sysref.commands.filterCommands
-import com.sysref.commands.pluralCommands
-import com.sysref.commands.pluralMatches
+import com.sysref.commands.resources.Res
+import com.sysref.commands.resources.chip_favorites
+import com.sysref.commands.resources.chip_favorites_description
+import com.sysref.commands.resources.favorites_count
+import com.sysref.commands.resources.favorites_empty
+import com.sysref.commands.resources.favorites_no_matches
+import com.sysref.commands.resources.favorites_none_for_platform
+import com.sysref.commands.resources.matches_count
+import com.sysref.commands.resources.no_matches
+import com.sysref.commands.resources.query_placeholder
+import com.sysref.commands.resources.search_intro
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun SearchPane(
@@ -78,19 +89,22 @@ internal fun SearchPane(
         val blank = trimmed.isEmpty()
         when {
             favoritesOnly && favorites.isEmpty() ->
-                CenterNote("избранное пока пусто\n\nнажмите ☆ справа от команды,\nчтобы она появилась здесь")
+                CenterNote(stringResource(Res.string.favorites_empty))
             !favoritesOnly && blank ->
-                CenterNote("введите фрагмент команды\nили слово на русском\n\nпримеры:  journalctl\n          файрвол\n          robocopy")
+                CenterNote(stringResource(Res.string.search_intro))
             results.isEmpty() && favoritesOnly && blank ->
-                CenterNote("в избранном нет команд\nдля этой платформы\n\nвыберите чип «все»")
+                CenterNote(stringResource(Res.string.favorites_none_for_platform))
             results.isEmpty() && favoritesOnly ->
-                CenterNote("в избранном нет совпадений\n\nснимите фильтр ★ избранное,\nчтобы искать по всей базе")
-            results.isEmpty() -> CenterNote("нет совпадений")
+                CenterNote(stringResource(Res.string.favorites_no_matches))
+            results.isEmpty() -> CenterNote(stringResource(Res.string.no_matches))
             else -> LazyColumn(Modifier.fillMaxSize()) {
                 item {
                     Hint(
-                        if (favoritesOnly && blank) "// ★ избранное: ${pluralCommands(results.size)}"
-                        else "// ${pluralMatches(results.size)}",
+                        if (favoritesOnly && blank) {
+                            pluralStringResource(Res.plurals.favorites_count, results.size, results.size)
+                        } else {
+                            pluralStringResource(Res.plurals.matches_count, results.size, results.size)
+                        },
                     )
                 }
                 items(results, key = { it.id }) { entry ->
@@ -137,7 +151,7 @@ private fun PromptField(
                 Text("> ", color = Amber, fontFamily = Mono, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 Box(Modifier.weight(1f)) {
                     if (query.isEmpty()) {
-                        Text("команда или слово", color = PhosphorDim, fontFamily = Mono, fontSize = 16.sp)
+                        Text(stringResource(Res.string.query_placeholder), color = PhosphorDim, fontFamily = Mono, fontSize = 16.sp)
                     }
                     inner()
                 }
@@ -153,6 +167,7 @@ private fun FilterRow(
     favoritesOnly: Boolean,
     onFavoritesOnly: (Boolean) -> Unit,
 ) {
+    val favoritesDescription = stringResource(Res.string.chip_favorites_description)
     Row(
         Modifier
             .fillMaxWidth()
@@ -161,7 +176,7 @@ private fun FilterRow(
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Text(
-            text = "★ избранное",
+            text = stringResource(Res.string.chip_favorites),
             color = if (favoritesOnly) Color.Black else Amber,
             fontFamily = Mono,
             fontSize = 12.sp,
@@ -169,13 +184,13 @@ private fun FilterRow(
                 .background(if (favoritesOnly) Amber else Color.Transparent)
                 .border(1.dp, Amber)
                 .toggleable(value = favoritesOnly, role = Role.Checkbox, onValueChange = onFavoritesOnly)
-                .semantics { contentDescription = "Только избранное" }
+                .semantics { contentDescription = favoritesDescription }
                 .padding(horizontal = 8.dp, vertical = 6.dp),
         )
         SearchFilter.entries.forEach { chip ->
             val on = chip == selected
             Text(
-                text = chip.label,
+                text = chip.labelRes?.let { stringResource(it) } ?: chip.label,
                 color = if (on) Color.Black else PhosphorMuted,
                 fontFamily = Mono,
                 fontSize = 12.sp,

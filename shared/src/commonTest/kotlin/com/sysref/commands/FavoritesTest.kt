@@ -97,15 +97,6 @@ class FavoritesTest {
         assertEquals(listOf("nmap -sV"), found.map { it.command })
     }
 
-    @Test
-    fun pluralCommandsRussian() {
-        assertEquals("1 команда", pluralCommands(1))
-        assertEquals("3 команды", pluralCommands(3))
-        assertEquals("5 команд", pluralCommands(5))
-        assertEquals("11 команд", pluralCommands(11))
-        assertEquals("22 команды", pluralCommands(22))
-    }
-
     private fun entry(
         index: Int,
         command: String,
