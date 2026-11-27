@@ -6,13 +6,13 @@ data class CommandEntry(
     val platform: String,
     val category: String,
     val index: Int,
+    val danger: Boolean = false,
 ) {
-    /**
-     * Stable key for favorites. Built from the entry content, not from its position,
-     * so favorites survive reordering or new commands in commands.json.
-     * platform + category + command is unique (checked by tools/build_commands.py).
-     */
-    val id: String get() = "$platform/$category/$command"
+    val id: String = "$platform/$category/$command"
+
+    internal val commandFolded: String = foldRu(command)
+    internal val commandWords: List<String> = commandFolded.split(WHITESPACE)
+    internal val descriptionFolded: String = foldRu(description)
 }
 
 enum class Platform(
@@ -100,27 +100,48 @@ enum class Category(
 private val platformsById = Platform.entries.associateBy { it.id }
 private val categoriesById = Category.entries.associateBy { it.id }
 
+fun platformOrNull(id: String?): Platform? = id?.let { platformsById[it] }
+
+fun categoryOrNull(id: String?): Category? = id?.let { categoriesById[it] }
+
 fun platformById(id: String): Platform =
-    platformsById[id] ?: error("unknown platform: $id")
+    platformOrNull(id) ?: error("unknown platform: $id")
 
 fun categoryById(id: String): Category =
-    categoriesById[id] ?: error("unknown category: $id")
+    categoryOrNull(id) ?: error("unknown category: $id")
 
 val browsePlatforms: List<Platform> = Platform.entries
 
-private val distroIds = setOf("debian", "rhel", "suse", "arch")
-private val linuxFamily = setOf("debian", "rhel", "suse", "arch", "linux")
+private val WHITESPACE = Regex("\\s+")
+
+private val distroIds = setOf(Platform.DEBIAN.id, Platform.RHEL.id, Platform.SUSE.id, Platform.ARCH.id)
+private val linuxFamily = distroIds + Platform.LINUX.id
+
+enum class SearchFilter(val id: String, val label: String) {
+    ALL("all", "все"),
+    LINUX_ALL("linall", "linux"),
+    DEBIAN("debian", "deb"),
+    RHEL("rhel", "rhel"),
+    SUSE("suse", "suse"),
+    ARCH("arch", "arch"),
+    CMD("cmd", "cmd"),
+    PS("ps", "ps"),
+    ;
+
+    companion object {
+        fun fromId(id: String?): SearchFilter = entries.firstOrNull { it.id == id } ?: ALL
+    }
+}
 
 fun inBrowse(entry: CommandEntry, platformId: String): Boolean = when (platformId) {
-    in distroIds -> entry.platform == platformId || entry.platform == "linux"
+    in distroIds -> entry.platform == platformId || entry.platform == Platform.LINUX.id
     else -> entry.platform == platformId
 }
 
-fun inFilter(entry: CommandEntry, filter: String): Boolean = when (filter) {
-    "all" -> true
-    "linall" -> entry.platform in linuxFamily
-    in distroIds -> entry.platform == filter || entry.platform == "linux"
-    else -> entry.platform == filter
+fun inFilter(entry: CommandEntry, filter: SearchFilter): Boolean = when (filter) {
+    SearchFilter.ALL -> true
+    SearchFilter.LINUX_ALL -> entry.platform in linuxFamily
+    else -> inBrowse(entry, filter.id)
 }
 
 fun foldRu(value: String): String = buildString(value.length) {
@@ -134,24 +155,24 @@ fun foldRu(value: String): String = buildString(value.length) {
     }
 }
 
+private val categoryHay: Map<String, String> = Category.entries.associate { category ->
+    category.id to foldRu((listOf(category.title, category.id) + category.aliases).joinToString(" "))
+}
+
+private val platformHay: Map<String, String> = Platform.entries.associate { platform ->
+    platform.id to foldRu((listOf(platform.title, platform.id) + platform.aliases).joinToString(" "))
+}
+
 fun rankOf(entry: CommandEntry, queryFolded: String): Int {
-    val command = foldRu(entry.command)
+    val command = entry.commandFolded
     if (command == queryFolded) return 0
     if (command.startsWith(queryFolded)) return 1
-    if (command.split(Regex("\\s+")).any { it.startsWith(queryFolded) }) return 2
+    if (entry.commandWords.any { it.startsWith(queryFolded) }) return 2
     if (command.contains(queryFolded)) return 3
-    if (foldRu(entry.description).contains(queryFolded)) return 4
+    if (entry.descriptionFolded.contains(queryFolded)) return 4
     if (queryFolded.length >= 2) {
-        val category = categoryById(entry.category)
-        val categoryHay = foldRu(
-            (listOf(category.title, category.id) + category.aliases).joinToString(" "),
-        )
-        if (categoryHay.contains(queryFolded)) return 5
-        val platform = platformById(entry.platform)
-        val platformHay = foldRu(
-            (listOf(platform.title, platform.id) + platform.aliases).joinToString(" "),
-        )
-        if (platformHay.contains(queryFolded)) return 6
+        if (categoryHay[entry.category].orEmpty().contains(queryFolded)) return 5
+        if (platformHay[entry.platform].orEmpty().contains(queryFolded)) return 6
     }
     return Int.MAX_VALUE
 }
@@ -159,7 +180,7 @@ fun rankOf(entry: CommandEntry, queryFolded: String): Int {
 fun searchCommands(
     commands: List<CommandEntry>,
     query: String,
-    filter: String,
+    filter: SearchFilter,
 ): List<CommandEntry> {
     val folded = foldRu(query.trim())
     if (folded.isEmpty()) return emptyList()
@@ -171,31 +192,24 @@ fun searchCommands(
         .sortedWith(
             compareBy<Pair<CommandEntry, Int>> { it.second }
                 .thenBy { if (it.second <= 3) it.first.command.length else 0 }
-                .thenBy { foldRu(it.first.command) }
+                .thenBy { it.first.commandFolded }
                 .thenBy { it.first.index },
         )
         .map { it.first }
         .toList()
 }
 
-fun pluralMatches(count: Int): String {
+private fun pluralRu(count: Int, one: String, few: String, many: String): String {
     val mod10 = count % 10
     val mod100 = count % 100
     val word = when {
-        mod10 == 1 && mod100 != 11 -> "совпадение"
-        mod10 in 2..4 && mod100 !in 12..14 -> "совпадения"
-        else -> "совпадений"
+        mod10 == 1 && mod100 != 11 -> one
+        mod10 in 2..4 && mod100 !in 12..14 -> few
+        else -> many
     }
     return "$count $word"
 }
 
-fun pluralCommands(count: Int): String {
-    val mod10 = count % 10
-    val mod100 = count % 100
-    val word = when {
-        mod10 == 1 && mod100 != 11 -> "команда"
-        mod10 in 2..4 && mod100 !in 12..14 -> "команды"
-        else -> "команд"
-    }
-    return "$count $word"
-}
+fun pluralMatches(count: Int): String = pluralRu(count, "совпадение", "совпадения", "совпадений")
+
+fun pluralCommands(count: Int): String = pluralRu(count, "команда", "команды", "команд")

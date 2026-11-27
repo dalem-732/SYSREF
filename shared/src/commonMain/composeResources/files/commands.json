@@ -1529,7 +1529,8 @@
       "command": "ufw reset",
       "description": "Удалить все правила и выключить UFW. Спросит подтверждение.",
       "platform": "debian",
-      "category": "firewall"
+      "category": "firewall",
+      "danger": true
     },
     {
       "command": "firewall-cmd --state",
@@ -2285,7 +2286,8 @@
       "command": "userdel -r <пользователь>",
       "description": "Удалить учётную запись, домашний каталог и почтовый ящик.",
       "platform": "linux",
-      "category": "users"
+      "category": "users",
+      "danger": true
     },
     {
       "command": "groupadd <группа>",
@@ -2645,25 +2647,29 @@
       "command": "wipefs -a /dev/sdX1",
       "description": "Стереть подписи файловых систем с устройства. Данные разделов после этого не монтируются.",
       "platform": "linux",
-      "category": "disks"
+      "category": "disks",
+      "danger": true
     },
     {
       "command": "mkfs.ext4 /dev/sdX1",
       "description": "Создать ext4. Содержимое раздела уничтожается.",
       "platform": "linux",
-      "category": "disks"
+      "category": "disks",
+      "danger": true
     },
     {
       "command": "mkfs.xfs /dev/sdX1",
       "description": "Создать XFS. Содержимое раздела уничтожается.",
       "platform": "linux",
-      "category": "disks"
+      "category": "disks",
+      "danger": true
     },
     {
       "command": "mkfs.btrfs /dev/sdX1",
       "description": "Создать Btrfs. Содержимое раздела уничтожается.",
       "platform": "linux",
-      "category": "disks"
+      "category": "disks",
+      "danger": true
     },
     {
       "command": "e2label /dev/sdX1 <метка>",
@@ -2837,7 +2843,8 @@
       "command": "dd if=/dev/zero of=<файл> bs=1M count=10 status=progress",
       "description": "Записать 10 МиБ нулей в файл. of= должен указывать на файл, а не на диск, если цель не стереть устройство.",
       "platform": "linux",
-      "category": "disks"
+      "category": "disks",
+      "danger": true
     },
     {
       "command": "pvs",
@@ -2861,7 +2868,8 @@
       "command": "pvremove /dev/sdX1",
       "description": "Снять метку физического тома. Том не должен использоваться группой.",
       "platform": "linux",
-      "category": "lvm"
+      "category": "lvm",
+      "danger": true
     },
     {
       "command": "pvresize /dev/sdX1",
@@ -2903,7 +2911,8 @@
       "command": "vgremove <vg>",
       "description": "Удалить пустую группу томов.",
       "platform": "linux",
-      "category": "lvm"
+      "category": "lvm",
+      "danger": true
     },
     {
       "command": "vgchange -ay",
@@ -2975,7 +2984,8 @@
       "command": "lvremove /dev/<vg>/<lv>",
       "description": "Удалить логический том и его данные.",
       "platform": "linux",
-      "category": "lvm"
+      "category": "lvm",
+      "danger": true
     },
     {
       "command": "lvrename <vg> <старое> <новое>",
@@ -3077,13 +3087,15 @@
       "command": "rm -r <каталог>",
       "description": "Удалить каталог и его содержимое.",
       "platform": "linux",
-      "category": "files"
+      "category": "files",
+      "danger": true
     },
     {
       "command": "rm -rf <каталог>",
       "description": "Удалить каталог без вопросов. Вернуть содержимое штатной командой нельзя.",
       "platform": "linux",
-      "category": "files"
+      "category": "files",
+      "danger": true
     },
     {
       "command": "cp <источник> <назначение>",
@@ -4571,7 +4583,8 @@
       "command": "crontab -r",
       "description": "Удалить свой crontab целиком.",
       "platform": "linux",
-      "category": "cron"
+      "category": "cron",
+      "danger": true
     },
     {
       "command": "crontab -u <пользователь> -l",
@@ -4943,7 +4956,8 @@
       "command": "setenforce 0",
       "description": "Перевести SELinux в Permissive до перезагрузки. Правила не применяются, нарушения пишутся.",
       "platform": "rhel",
-      "category": "logs"
+      "category": "logs",
+      "danger": true
     },
     {
       "command": "setenforce 1",
@@ -5711,7 +5725,8 @@
       "command": "git reset --hard HEAD~1",
       "description": "Убрать последний коммит и выбросить незафиксированные изменения рабочего дерева.",
       "platform": "linux",
-      "category": "git"
+      "category": "git",
+      "danger": true
     },
     {
       "command": "git revert <коммит>",
@@ -5741,7 +5756,8 @@
       "command": "git clean -fd",
       "description": "Удалить неотслеживаемые файлы и каталоги. Перед этим смотрят git clean -n.",
       "platform": "linux",
-      "category": "git"
+      "category": "git",
+      "danger": true
     },
     {
       "command": "git blame <файл>",
@@ -6567,9 +6583,10 @@
     },
     {
       "command": "iptables -F",
-      "description": "Очистить правила во всех цепочках таблицы filter. Политики при этом не меняются.",
+      "description": "Очистить правила во всех цепочках таблицы filter. Политики цепочек не меняются: при политике DROP сразу блокируется весь трафик, включая текущую SSH-сессию.",
       "platform": "linux",
-      "category": "nettools"
+      "category": "nettools",
+      "danger": true
     },
     {
       "command": "iptables -t nat -L -n -v",
@@ -7553,7 +7570,8 @@
       "command": "clean",
       "description": "Внутри diskpart: стереть разметку выбранного диска. Разделы и данные пропадают.",
       "platform": "cmd",
-      "category": "disks"
+      "category": "disks",
+      "danger": true
     },
     {
       "command": "convert gpt",
@@ -7577,7 +7595,8 @@
       "command": "format fs=ntfs quick",
       "description": "Внутри diskpart: быстро отформатировать выбранный том в NTFS.",
       "platform": "cmd",
-      "category": "disks"
+      "category": "disks",
+      "danger": true
     },
     {
       "command": "assign letter=E",
@@ -7757,7 +7776,8 @@
       "command": "rmdir /s /q <каталог>",
       "description": "Удалить каталог вместе с содержимым без вопроса.",
       "platform": "cmd",
-      "category": "files"
+      "category": "files",
+      "danger": true
     },
     {
       "command": "del <файл>",
@@ -7775,7 +7795,8 @@
       "command": "del /s /q <каталог>\\*",
       "description": "Удалить файлы в дереве. Каталоги остаются.",
       "platform": "cmd",
-      "category": "files"
+      "category": "files",
+      "danger": true
     },
     {
       "command": "copy <источник> <назначение>",
@@ -8501,7 +8522,8 @@
       "command": "netsh advfirewall set allprofiles state off",
       "description": "Выключить брандмауэр во всех профилях.",
       "platform": "cmd",
-      "category": "firewall"
+      "category": "firewall",
+      "danger": true
     },
     {
       "command": "netsh advfirewall set allprofiles firewallpolicy blockinbound,allowoutbound",
@@ -9131,7 +9153,8 @@
       "command": "Initialize-Disk -Number 1 -PartitionStyle GPT",
       "description": "Инициализировать диск 1 как GPT. Номер берут из Get-Disk. Данные на диске теряются.",
       "platform": "ps",
-      "category": "disks"
+      "category": "disks",
+      "danger": true
     },
     {
       "command": "New-Partition -DiskNumber 1 -UseMaximumSize -DriveLetter E",
@@ -9141,9 +9164,10 @@
     },
     {
       "command": "Format-Volume -DriveLetter E -FileSystem NTFS -NewFileSystemLabel Data",
-      "description": "Отформатировать том E: в NTFS.",
+      "description": "Отформатировать том E: в NTFS. Все данные на томе уничтожаются.",
       "platform": "ps",
-      "category": "disks"
+      "category": "disks",
+      "danger": true
     },
     {
       "command": "Resize-Partition -DriveLetter C -Size 80GB",
@@ -9261,9 +9285,10 @@
     },
     {
       "command": "Remove-Item C:\\temp\\dir -Recurse -Force",
-      "description": "Удалить каталог вместе с содержимым.",
+      "description": "Удалить каталог со всем содержимым без подтверждения, включая скрытые и доступные только для чтения файлы. В корзину ничего не попадает.",
       "platform": "ps",
-      "category": "files"
+      "category": "files",
+      "danger": true
     },
     {
       "command": "Copy-Item <источник> <назначение>",
@@ -9863,7 +9888,8 @@
       "command": "Remove-LocalUser -Name <пользователь>",
       "description": "Удалить локального пользователя.",
       "platform": "ps",
-      "category": "users"
+      "category": "users",
+      "danger": true
     },
     {
       "command": "Rename-LocalUser -Name <старое> -NewName <новое>",
@@ -10169,7 +10195,8 @@
       "command": "Remove-ADUser -Identity <пользователь>",
       "description": "Удалить пользователя домена.",
       "platform": "ps",
-      "category": "ad"
+      "category": "ad",
+      "danger": true
     },
     {
       "command": "Enable-ADAccount -Identity <пользователь>",

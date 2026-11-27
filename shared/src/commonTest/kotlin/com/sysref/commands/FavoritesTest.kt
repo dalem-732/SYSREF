@@ -48,31 +48,31 @@ class FavoritesTest {
     fun withoutChipBehavesLikePlainSearch() {
         val favorites = ids(0)
         assertEquals(
-            searchCommands(commands, "upgrade", "all"),
-            filterCommands(commands, "upgrade", "all", favorites, favoritesOnly = false),
+            searchCommands(commands, "upgrade", SearchFilter.ALL),
+            filterCommands(commands, "upgrade", SearchFilter.ALL, favorites, favoritesOnly = false),
         )
-        assertTrue(filterCommands(commands, "", "all", favorites, favoritesOnly = false).isEmpty())
+        assertTrue(filterCommands(commands, "", SearchFilter.ALL, favorites, favoritesOnly = false).isEmpty())
     }
 
     @Test
     fun emptyQueryListsAllFavoritesInDatabaseOrder() {
-        val found = filterCommands(commands, "  ", "all", ids(4, 0, 3), favoritesOnly = true)
+        val found = filterCommands(commands, "  ", SearchFilter.ALL, ids(4, 0, 3), favoritesOnly = true)
         assertEquals(listOf(0, 3, 4), found.map { it.index })
     }
 
     @Test
     fun searchAndFavoritesCombine() {
         // "upgrade" matches apt upgrade and dnf upgrade; only dnf upgrade is starred.
-        val found = filterCommands(commands, "upgrade", "all", ids(2, 3), favoritesOnly = true)
+        val found = filterCommands(commands, "upgrade", SearchFilter.ALL, ids(2, 3), favoritesOnly = true)
         assertEquals(listOf("dnf upgrade"), found.map { it.command })
     }
 
     @Test
     fun searchFavoritesAndPlatformCombine() {
         val favorites = ids(1, 2, 3)
-        val debian = filterCommands(commands, "upgrade", "debian", favorites, favoritesOnly = true)
+        val debian = filterCommands(commands, "upgrade", SearchFilter.DEBIAN, favorites, favoritesOnly = true)
         assertEquals(listOf("apt upgrade"), debian.map { it.command })
-        val rhelAll = filterCommands(commands, "", "rhel", favorites, favoritesOnly = true)
+        val rhelAll = filterCommands(commands, "", SearchFilter.RHEL, favorites, favoritesOnly = true)
         // rhel filter includes common linux commands
         assertEquals(listOf("dnf upgrade", "nmap -sV"), rhelAll.map { it.command })
     }
@@ -80,20 +80,20 @@ class FavoritesTest {
     @Test
     fun favoritesKeepSearchRanking() {
         val favorites = ids(0, 1, 2)
-        val found = filterCommands(commands, "apt", "all", favorites, favoritesOnly = true)
+        val found = filterCommands(commands, "apt", SearchFilter.ALL, favorites, favoritesOnly = true)
         assertEquals(listOf("apt update", "apt upgrade"), found.map { it.command })
     }
 
     @Test
     fun noFavoritesGivesEmptyResult() {
-        assertTrue(filterCommands(commands, "", "all", emptySet(), favoritesOnly = true).isEmpty())
-        assertTrue(filterCommands(commands, "apt", "all", emptySet(), favoritesOnly = true).isEmpty())
+        assertTrue(filterCommands(commands, "", SearchFilter.ALL, emptySet(), favoritesOnly = true).isEmpty())
+        assertTrue(filterCommands(commands, "apt", SearchFilter.ALL, emptySet(), favoritesOnly = true).isEmpty())
     }
 
     @Test
     fun staleIdsAreIgnored() {
         val favorites = setOf("linux/nettools/removed-command", commands[3].id)
-        val found = filterCommands(commands, "", "all", favorites, favoritesOnly = true)
+        val found = filterCommands(commands, "", SearchFilter.ALL, favorites, favoritesOnly = true)
         assertEquals(listOf("nmap -sV"), found.map { it.command })
     }
 

@@ -5,6 +5,7 @@ import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -23,13 +24,14 @@ val PhosphorDim = Color(0xFF1E7A38)
 val PhosphorMuted = Color(0xFF8FCB9C)
 val Amber = Color(0xFFFFB000)
 val Line = Color(0xFF16331C)
+val Danger = Color(0xFFFF5C5C)
 
-// JetBrains Mono ships as a Compose Multiplatform resource, so Android and desktop use the same files.
 val Mono: FontFamily
-    @Composable get() = FontFamily(
-        Font(Res.font.jetbrains_mono_regular, FontWeight.Normal),
-        Font(Res.font.jetbrains_mono_bold, FontWeight.Bold),
-    )
+    @Composable get() {
+        val regular = Font(Res.font.jetbrains_mono_regular, FontWeight.Normal)
+        val bold = Font(Res.font.jetbrains_mono_bold, FontWeight.Bold)
+        return remember(regular, bold) { FontFamily(regular, bold) }
+    }
 
 private val Scheme = darkColorScheme(
     background = TermBg,

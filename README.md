@@ -10,11 +10,11 @@
 
 ## Скриншоты
 
-Список платформ. Сверху пункт «★ Избранное» со счётчиком сохранённых команд:
+Список платформ. Сверху пункт "★ Избранное" со счётчиком сохранённых команд:
 
 ![Платформы SYSREF](docs/screenshots/platforms.png)
 
-Раздел «Пакеты» для Debian/Ubuntu. Звёздочка справа добавляет команду в избранное (★ — уже в избранном, ☆ — нет):
+Раздел "Пакеты" для Debian/Ubuntu. Звёздочка справа добавляет команду в избранное (★ - уже в избранном, ☆ - нет):
 
 ![Пакеты Debian/Ubuntu](docs/screenshots/packages.png)
 
@@ -26,20 +26,20 @@
 
 ![Поиск файрвол](docs/screenshots/search-firewall.png)
 
-Включён чип «★ избранное»: без запроса показываются все избранные команды. Чип работает вместе с запросом и фильтром платформы:
+Включён чип "★ избранное": без запроса показываются все избранные команды. Чип работает вместе с запросом и фильтром платформы:
 
 ![Избранное](docs/screenshots/search-favorites.png)
 
-Десктопная версия (Linux): справочник со звёздочками и поиск с включённым чипом «★ избранное»:
+Десктопная версия (Linux): справочник со звёздочками и поиск с включённым чипом "★ избранное":
 
 ![SYSREF на Linux: пакеты](docs/screenshots/desktop-packages.png)
 ![SYSREF на Linux: избранное](docs/screenshots/desktop-favorites.png)
 
 ## Десктоп (Windows/Linux)
 
-Десктопная версия собрана из того же кода, что и Android-приложение (Compose Multiplatform). Внутри та же база команд, тот же поиск, фильтры и избранное. Установщики лежат в [Releases](https://github.com/dalem-732/SYSREF/releases/latest). Внутри у каждого своя Java, поэтому отдельно ставить её не нужно. Размер 50–65 МБ.
+Десктопная версия собрана из того же кода, что и Android-приложение (Compose Multiplatform). Внутри та же база команд, тот же поиск, фильтры и избранное. Установщики лежат в [Releases](https://github.com/dalem-732/SYSREF/releases/latest). Внутри у каждого своя Java, поэтому отдельно ставить её не нужно. Размер 50-65 МБ.
 
-**Windows 10/11:** скачайте `SYSREF-<версия>.msi` и запустите. Ставится для текущего пользователя, права администратора не нужны. Ярлык появится в меню «Пуск» и на рабочем столе. Установщик не подписан платным сертификатом, поэтому Windows SmartScreen может показать «Система Windows защитила ваш компьютер». Нажмите **Подробнее → Выполнить в любом случае**. Новая версия ставится поверх старой.
+**Windows 10/11:** скачайте `SYSREF-<версия>.msi` и запустите. Ставится для текущего пользователя, права администратора не нужны. Ярлык появится в меню "Пуск" и на рабочем столе. Установщик не подписан платным сертификатом, поэтому Windows SmartScreen может показать "Система Windows защитила ваш компьютер". Нажмите **Подробнее -> Выполнить в любом случае**. Новая версия ставится поверх старой.
 
 **Debian/Ubuntu:**
 
@@ -58,7 +58,7 @@ sudo zypper install ./sysref-*.rpm   # openSUSE
 
 **Любой Linux x86_64 без установки:** распакуйте `sysref-v<версия>-linux-x64.tar.gz` и запустите `SYSREF/bin/SYSREF`.
 
-После установки из пакета программа лежит в `/opt/sysref/` и есть в меню приложений, запуск из терминала: `/opt/sysref/bin/SYSREF`. Удаление: `sudo apt remove sysref` или `sudo dnf remove sysref`, на Windows через «Приложения».
+После установки из пакета программа лежит в `/opt/sysref/` и есть в меню приложений, запуск из терминала: `/opt/sysref/bin/SYSREF`. Удаление: `sudo apt remove sysref` или `sudo dnf remove sysref`, на Windows через "Приложения".
 
 Управление: мышь и клавиатура. **Ctrl+F** открывает поиск и ставит курсор в строку запроса. **Esc** очищает запрос, а если он пуст, возвращает на шаг назад. Щелчок по команде копирует её в буфер обмена, ☆ добавляет команду в избранное.
 
@@ -73,8 +73,9 @@ sudo zypper install ./sysref-*.rpm   # openSUSE
 - Поиск по мере ввода. Ищет по тексту команды, описанию, названию раздела и платформы. Регистр не важен, `ё` совпадает с `е`, фрагмент ищется и внутри слова.
 - Сначала идут точное совпадение команды, затем команда с таким началом, затем совпадение в отдельном слове команды, затем вхождение в команду, и только потом описание, раздел и платформа.
 - Чипы фильтра: все, linux, deb, rhel, suse, arch, cmd, ps. Чип дистрибутива оставляет и его собственные команды, и общие для Linux.
-- Нажатие копирует команду. Снизу появляется строка «скопировано». На Android 13 и новее система дополнительно показывает свою плашку буфера.
-- Избранное: звёздочка ☆ справа от команды добавляет её в избранное, повторное нажатие убирает. Чип «★ избранное» в поиске оставляет только избранные команды и работает вместе с запросом и чипом платформы; без запроса он показывает всё избранное. На главном экране есть пункт «★ Избранное». Список хранится только на устройстве (SharedPreferences), ключ записи — `платформа/раздел/команда`, поэтому избранное не сбивается при изменении порядка команд в базе.
+- Опасные команды (форматирование, стирание разделов, удаление без подтверждения, сброс правил файрвола, отключение SELinux и т. п.) помечены красной меткой "[!] опасная команда", а строка после копирования начинается с "скопировано, осторожно". Перед запуском такой команды проверьте аргументы.
+- Нажатие копирует команду. Снизу появляется строка "скопировано". На Android 13 и новее система дополнительно показывает свою плашку буфера.
+- Избранное: звёздочка ☆ справа от команды добавляет её в избранное, повторное нажатие убирает. Чип "★ избранное" в поиске оставляет только избранные команды и работает вместе с запросом и чипом платформы; без запроса он показывает всё избранное. На главном экране есть пункт "★ Избранное". Список хранится только на устройстве (SharedPreferences), ключ записи - `платформа/раздел/команда`, поэтому избранное не сбивается при изменении порядка команд в базе.
 
 ## Сколько команд
 
@@ -98,6 +99,7 @@ sudo zypper install ./sysref-*.rpm   # openSUSE
 - Модули: `shared` (Kotlin Multiplatform: Android + JVM desktop), `app` (Android), `desktop` (Windows/Linux)
 - kotlinx.serialization для чтения базы, Compose Multiplatform Resources для базы и шрифта
 - Android Gradle Plugin 8.7.3, Gradle 8.11.1
+- Версии плагинов и библиотек собраны в каталоге `gradle/libs.versions.toml`
 - `minSdk` 24, `targetSdk` 35, `compileSdk` 35
 - Байткод Java/Kotlin: 17
 - JDK для сборки: 17 или 21
@@ -113,9 +115,14 @@ shared/                             общий код Android и десктоп�
         Model.kt                    платформы, разделы, ранжирование поиска
         Favorites.kt                избранное: фильтр и интерфейс хранилища
         CommandRepository.kt        чтение commands.json
-        ui/SysRefApp.kt             справочник, поиск, копирование, избранное
+        ui/SysRefApp.kt             корневой экран: загрузка базы, состояние, копирование, избранное
+        ui/Screen.kt                режимы экрана и проверка параметров запуска
+        ui/BrowsePanes.kt           справочник: платформы, разделы, команды
+        ui/SearchPane.kt            поиск, строка запроса, чипы фильтра
+        ui/Components.kt            общие элементы: шапка, строка команды, звёздочка, метка опасной команды
+        ui/Highlight.kt             подсветка совпадений
         ui/Theme.kt                 цвета терминала и шрифт
-        ui/Platform.kt              системная «назад» и горячие клавиши
+        ui/Platform.kt              системная "назад" и горячие клавиши
     src/androidMain/                избранное в SharedPreferences, BackHandler
     src/desktopMain/                избранное в JSON-файле пользователя
     src/commonTest/, src/desktopTest/   unit-тесты
@@ -123,7 +130,10 @@ app/                                Android-приложение (MainActivity, 
 desktop/                            окно, Ctrl+F/Esc, упаковка MSI/DEB/RPM, значки
 tools/entries_linux.py              исходные записи Linux
 tools/entries_windows.py            исходные записи Windows
-tools/build_commands.py             сборка JSON и проверка дублей
+tools/build_commands.py             сборка JSON, проверка дублей, список опасных команд
+gradle/libs.versions.toml           версии плагинов и библиотек
+.github/workflows/ci.yml            проверки на каждый PR и push в main
+.github/workflows/release.yml       сборка APK и десктопных пакетов по тегу v*
 docs/screenshots/                   снимки экрана для README
 fastlane/metadata/android/          тексты, значок и снимки для F-Droid
 docs/fdroid-metadata.yml            черновик метаданных fdroiddata, в сборку не входит
@@ -143,10 +153,19 @@ docs/fdroid-inclusion.md            как повторить подготовк
       "description": "Обновить списки пакетов из настроенных репозиториев.",
       "platform": "debian",
       "category": "packages"
+    },
+    {
+      "command": "rm -rf <каталог>",
+      "description": "Удалить каталог без вопросов. Вернуть содержимое штатной командой нельзя.",
+      "platform": "linux",
+      "category": "files",
+      "danger": true
     }
   ]
 }
 ```
+
+`danger` необязателен. Он есть только у опасных команд, по умолчанию `false`.
 
 `platform`: `debian`, `rhel`, `suse`, `arch`, `linux`, `cmd`, `ps`.
 
@@ -166,13 +185,23 @@ python3 tools/build_commands.py
 
 Скрипт пишет `shared/src/commonMain/composeResources/files/commands.json`, не пускает пустые поля и одинаковые тройки платформа + раздел + команда. Общая команда Linux с тем же текстом, что и у дистрибутива, в выдаче дистрибутива остаётся один раз.
 
-Править JSON руками тоже можно. После ручной правки генератор при следующем запуске перезапишет файл из Python-исходников.
+Опасные команды перечислены в `DANGEROUS` в `tools/build_commands.py` парами (платформа, команда). Скрипт ставит им `"danger": true` и останавливается, если команда из списка пропала из базы.
+
+Проверить, что JSON совпадает с Python-исходниками, ничего не записывая (так делает CI):
+
+```bash
+python3 tools/build_commands.py --check
+```
+
+JSON руками не правят: CI сверяет его с генератором, а следующий запуск генератора перезапишет ручную правку.
+
+Тройка платформа + раздел + команда - ключ избранного. Если поменять команду или её раздел, у пользователей эта запись выпадет из избранного.
 
 Флаги в описаниях должны быть настоящими. Если утилита не входит в минимальную установку, это лучше прямо сказать в описании.
 
 ## Сборка
 
-Нужны JDK 17 или 21 и Android SDK: платформа Android 35 и Build-Tools 35.0.0. Переменная `ANDROID_HOME` указывает на SDK. Android Studio сама создаёт `local.properties` с `sdk.dir`. Этот файл в git не входит.
+Нужны JDK 17 или 21 и Android SDK: платформа Android 35 и Build-Tools 34.0.0 (версия по умолчанию для AGP 8.7). Переменная `ANDROID_HOME` указывает на SDK. Android Studio сама создаёт `local.properties` с `sdk.dir`. Этот файл в git не входит.
 
 ### Android Studio
 
@@ -191,6 +220,7 @@ export ANDROID_HOME="$HOME/Android/Sdk"   # или путь к вашему SDK
 ./gradlew :app:assembleDebug
 ./gradlew :app:assembleRelease
 ./gradlew :shared:desktopTest :shared:testDebugUnitTest   # unit-тесты общего кода
+./gradlew :app:lintDebug                                   # Android lint
 ```
 
 Десктоп (нужен JDK 17+ с `jpackage`, например Temurin):
@@ -217,7 +247,7 @@ app/build/outputs/apk/release/app-release-unsigned.apk
 
 Его нельзя поставить, пока он не подписан. Своя подпись включается только вместе с переменными окружения. Те же имена использует `.github/workflows/release.yml`:
 
-- `KEYSTORE_FILE` — путь к хранилищу `.jks` или `.keystore`
+- `KEYSTORE_FILE` - путь к хранилищу `.jks` или `.keystore`
 - `KEYSTORE_PASSWORD`
 - `KEY_ALIAS`
 - `KEY_PASSWORD`
@@ -233,6 +263,18 @@ export KEY_PASSWORD=...
 Без `KEYSTORE_FILE` блок `signingConfig` не создаётся. Пароли и файл хранилища в репозиторий не кладите: `*.jks`, `*.keystore` и `keystore.properties` уже в `.gitignore`.
 
 Обёртка Gradle уже в репозитории: `gradlew`, `gradlew.bat`, `gradle/wrapper/`. Отдельно ставить Gradle не нужно.
+
+### Версия
+
+Версия задаётся в одном месте: `versionCode` и `versionName` в `app/build.gradle.kts`. Десктоп берёт `packageVersion` из того же `versionName`, а `fdroid checkupdates` читает эти строки из того же файла. Для выпуска поднимите обе строки, добавьте `fastlane/metadata/android/{ru,en-US}/changelogs/<versionCode>.txt` и поставьте тег `v<versionName>`.
+
+`upgradeUuid` в `desktop/build.gradle.kts` менять нельзя: по нему Windows обновляет установленный SYSREF поверх старой версии.
+
+### CI
+
+`.github/workflows/ci.yml` запускается на каждый pull request и push в `main`. Он сверяет `commands.json` с генератором (`build_commands.py --check`), проверяет Gradle Wrapper, запускает unit-тесты, Android lint, debug-сборку APK и десктопную сборку без установщика. Права у workflow только на чтение.
+
+`.github/workflows/release.yml` запускается на теги `v*` и вручную. Он собирает подписанный APK, DEB, RPM, tar.gz и MSI. Право на запись (`contents: write`) есть только у шага публикации релиза. Если секрет `KEYSTORE_BASE64` пуст, сборка APK останавливается с понятной ошибкой. Все actions закреплены по SHA коммита.
 
 ## Установка APK
 
@@ -262,7 +304,7 @@ export KEY_PASSWORD=...
 
 F-Droid собирает только Android-модуль `app` (`subdir: app`). Модули `shared` и `desktop` ему не мешают, все зависимости берутся из Google Maven и Maven Central. Сборка `assembleRelease` без `KEYSTORE_FILE` остаётся неподписанной: F-Droid собирает её сам и подписывает своим ключом. Тексты, значок и снимки карточки лежат в `fastlane/metadata/android/` (`ru` и `en-US`).
 
-Черновик метаданных для репозитория [fdroiddata](https://gitlab.com/fdroid/fdroiddata) — `docs/fdroid-metadata.yml`. В сборку приложения он не входит. В fdroiddata его кладут как `metadata/com.sysref.commands.yml` после тега `v1.0.0` на коммите, где `versionName` равен `1.0.0`, а `versionCode` равен `1`. Как повторить подготовку: [docs/fdroid-inclusion.md](docs/fdroid-inclusion.md).
+Черновик метаданных для репозитория [fdroiddata](https://gitlab.com/fdroid/fdroiddata) - `docs/fdroid-metadata.yml`. В сборку приложения он не входит. В fdroiddata его кладут как `metadata/com.sysref.commands.yml`. В нём строки `Builds` для опубликованных тегов `v1.0.0`, `v1.1.0` и `v1.2.0`, новые теги `fdroid checkupdates` добавит сам (`AutoUpdateMode: Version`, `UpdateCheckMode: Tags`). Зависимости только из Google Maven и Maven Central, без сервисов Google, трекеров и разрешений. Как повторить подготовку: [docs/fdroid-inclusion.md](docs/fdroid-inclusion.md).
 
 ## Лицензия
 
