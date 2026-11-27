@@ -10,7 +10,8 @@ class SharedPrefsFavoritesStorage(context: Context) : FavoritesStorage {
     private val prefs = context.applicationContext
         .getSharedPreferences("favorites", Context.MODE_PRIVATE)
 
-    override fun load(): Set<String> = prefs.getStringSet(KEY, emptySet())?.toSet() ?: emptySet()
+    override fun load(): Set<String> =
+        runCatching { prefs.getStringSet(KEY, emptySet())?.toSet() }.getOrNull() ?: emptySet()
 
     override fun save(favorites: Set<String>) {
         prefs.edit().putStringSet(KEY, favorites.toSet()).apply()

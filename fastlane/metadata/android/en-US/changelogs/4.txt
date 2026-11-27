@@ -1,0 +1,1 @@
+Dangerous commands (formatting, deletion, firewall flush) now carry a red warning mark, and several descriptions are clearer. Faster search, safer handling of launch parameters, more reliable saving of favorites on desktop.

@@ -20,18 +20,14 @@ import com.sysref.commands.ui.SysRefRoot
 import kotlinx.coroutines.flow.MutableSharedFlow
 import java.awt.Dimension
 
-/**
- * Optional arguments, mostly for screenshots:
- * --screen=browse|search --platform=debian --category=packages --query=nmap --filter=all --favorites
- */
 private class LaunchArgs(args: Array<String>) {
     private val values: Map<String, String> = args.filter { it.startsWith("--") && "=" in it }
         .associate { it.removePrefix("--").substringBefore("=") to it.substringAfter("=") }
-    val screen: String = values["screen"] ?: "browse"
+    val screen: String = values["screen"].orEmpty()
     val platform: String? = values["platform"]
     val category: String? = values["category"]
-    val query: String = values["query"].orEmpty()
-    val filter: String = values["filter"] ?: "all"
+    val query: String = values["query"].orEmpty().take(200)
+    val filter: String = values["filter"].orEmpty()
     val favoritesOnly: Boolean = "--favorites" in args
 }
 

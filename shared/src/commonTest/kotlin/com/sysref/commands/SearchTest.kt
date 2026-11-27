@@ -16,26 +16,26 @@ class SearchTest {
 
     @Test
     fun exactCommandBeatsPrefix() {
-        val found = searchCommands(commands, "apt", "all").map { it.command }
+        val found = searchCommands(commands, "apt", SearchFilter.ALL).map { it.command }
         assertEquals("apt", found.first())
         assertTrue(found.indexOf("apt update") < found.indexOf("apt upgrade"))
     }
 
     @Test
     fun prefixBeatsDescription() {
-        val found = searchCommands(commands, "upgrade", "all").map { it.command }
+        val found = searchCommands(commands, "upgrade", SearchFilter.ALL).map { it.command }
         assertEquals(listOf("apt upgrade", "dnf upgrade"), found.take(2))
     }
 
     @Test
     fun matchesInsideWordAndCase() {
-        val found = searchCommands(commands, "GRADE", "all").map { it.command }
+        val found = searchCommands(commands, "GRADE", SearchFilter.ALL).map { it.command }
         assertTrue(found.contains("apt upgrade"))
     }
 
     @Test
     fun russianDescriptionMatch() {
-        val found = searchCommands(commands, "обнов", "all").map { it.command }
+        val found = searchCommands(commands, "обнов", SearchFilter.ALL).map { it.command }
         assertTrue(found.contains("apt update"))
         assertTrue(found.contains("dnf upgrade"))
     }
@@ -43,31 +43,31 @@ class SearchTest {
     @Test
     fun yoFoldsToE() {
         val withYo = listOf(entry(0, "echo", "Учётная запись.", "linux", "users"))
-        assertEquals(1, searchCommands(withYo, "учет", "all").size)
+        assertEquals(1, searchCommands(withYo, "учет", SearchFilter.ALL).size)
     }
 
     @Test
     fun debianFilterIncludesCommonLinux() {
-        val found = searchCommands(commands, "nmap", "debian").map { it.command }
+        val found = searchCommands(commands, "nmap", SearchFilter.DEBIAN).map { it.command }
         assertEquals(listOf("nmap -sV"), found)
     }
 
     @Test
     fun cmdFilterHidesPowerShell() {
-        val found = searchCommands(commands, "firewall", "cmd")
+        val found = searchCommands(commands, "firewall", SearchFilter.CMD)
         assertTrue(found.isEmpty())
     }
 
     @Test
     fun toolNameDoesNotPullWholeCategory() {
         val more = commands + entry(6, "tcpdump -i eth0", "Печатать пакеты.", "linux", "nettools")
-        val found = searchCommands(more, "nmap", "all").map { it.command }
+        val found = searchCommands(more, "nmap", SearchFilter.ALL).map { it.command }
         assertEquals(listOf("nmap -sV"), found)
     }
 
     @Test
     fun platformAliasMatches() {
-        val found = searchCommands(commands, "убунту", "all")
+        val found = searchCommands(commands, "убунту", SearchFilter.ALL)
         assertTrue(found.any { it.platform == "debian" })
         assertTrue(found.none { it.platform == "rhel" })
     }
