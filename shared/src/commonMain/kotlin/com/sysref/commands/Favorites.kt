@@ -12,7 +12,7 @@ fun toggleFavorite(favorites: Set<String>, id: String): Set<String> =
 fun filterCommands(
     commands: List<CommandEntry>,
     query: String,
-    filter: String,
+    filter: SearchFilter,
     favorites: Set<String>,
     favoritesOnly: Boolean,
 ): List<CommandEntry> {

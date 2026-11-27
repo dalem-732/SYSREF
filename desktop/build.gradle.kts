@@ -1,10 +1,15 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
-    id("org.jetbrains.kotlin.jvm")
-    id("org.jetbrains.kotlin.plugin.compose")
-    id("org.jetbrains.compose")
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.compose.multiplatform)
 }
+
+val appVersion: String = Regex("""versionName\s*=\s*"([^"]+)"""")
+    .find(rootProject.file("app/build.gradle.kts").readText())
+    ?.groupValues?.get(1)
+    ?: error("versionName not found in app/build.gradle.kts")
 
 kotlin {
     jvmToolchain(17)
@@ -13,7 +18,7 @@ kotlin {
 dependencies {
     implementation(project(":shared"))
     implementation(compose.desktop.currentOs)
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.9.0")
+    implementation(libs.kotlinx.coroutines.swing)
 }
 
 compose.desktop {
@@ -23,8 +28,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Msi, TargetFormat.Deb, TargetFormat.Rpm)
             packageName = "SYSREF"
-            // Keep in step with versionName in app/build.gradle.kts.
-            packageVersion = "1.2.0"
+            packageVersion = appVersion
             description = "Offline reference of Linux and Windows admin commands"
             vendor = "Antiokh Lebedev"
             copyright = "© 2026 Antiokh Lebedev. MIT License."
@@ -32,7 +36,6 @@ compose.desktop {
 
             windows {
                 iconFile.set(project.file("icons/sysref.ico"))
-                // Never change: Windows uses it to upgrade an installed SYSREF in place.
                 upgradeUuid = "54040c1d-c253-4261-9252-675c4fb65f23"
                 menu = true
                 menuGroup = "SYSREF"
