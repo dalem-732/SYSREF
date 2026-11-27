@@ -24,8 +24,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,10 +32,20 @@ import com.sysref.commands.CommandEntry
 import com.sysref.commands.FavoritesStorage
 import com.sysref.commands.SearchFilter
 import com.sysref.commands.loadCommands
+import com.sysref.commands.resources.Res
+import com.sysref.commands.resources.copied
+import com.sysref.commands.resources.copied_danger
+import com.sysref.commands.resources.favorite_added
+import com.sysref.commands.resources.favorite_removed
+import com.sysref.commands.resources.load_error
+import com.sysref.commands.resources.loading
 import com.sysref.commands.toggleFavorite
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.stringResource
 
 private sealed interface LoadState {
     data object Loading : LoadState
@@ -102,7 +111,7 @@ fun SysRefApp(
     var favoritesOnly by rememberSaveable { mutableStateOf(initialFavoritesOnly) }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    val clipboard = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
     var favorites by remember { mutableStateOf(favoritesStorage.load()) }
     var focusSearchTick by remember { mutableIntStateOf(0) }
 
@@ -129,23 +138,24 @@ fun SysRefApp(
         }
     }
 
-    fun notify(message: String) {
+    fun notify(message: StringResource, command: String) {
         scope.launch {
+            val text = getString(message, command)
             snackbar.currentSnackbarData?.dismiss()
-            snackbar.showSnackbar(message)
+            snackbar.showSnackbar(text)
         }
     }
 
     fun copy(entry: CommandEntry) {
-        clipboard.setText(AnnotatedString(entry.command))
-        notify(if (entry.danger) "скопировано, осторожно: ${entry.command}" else "скопировано: ${entry.command}")
+        scope.launch { clipboard.setClipEntry(plainTextClipEntry(entry.command)) }
+        notify(if (entry.danger) Res.string.copied_danger else Res.string.copied, entry.command)
     }
 
     fun toggleStar(entry: CommandEntry) {
         val added = entry.id !in favorites
         favorites = toggleFavorite(favorites, entry.id)
         favoritesStorage.save(favorites)
-        notify(if (added) "★ в избранном: ${entry.command}" else "убрано из избранного: ${entry.command}")
+        notify(if (added) Res.string.favorite_added else Res.string.favorite_removed, entry.command)
     }
 
     val favoritesCount = remember(commands, favorites) {
@@ -168,8 +178,8 @@ fun SysRefApp(
                 val currentPlatform = platformId
                 val currentCategory = categoryId
                 when {
-                    loadError != null -> CenterNote("ошибка чтения базы\n$loadError")
-                    commands == null -> CenterNote("загрузка базы...")
+                    loadError != null -> CenterNote(stringResource(Res.string.load_error, loadError))
+                    commands == null -> CenterNote(stringResource(Res.string.loading))
                     screen == Screen.SEARCH -> SearchPane(
                         commands = commands,
                         query = query,

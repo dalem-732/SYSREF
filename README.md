@@ -1,6 +1,6 @@
 # SYSREF
 
-Офлайн-справочник команд системного администратора. Интерфейс на русском и выглядит как терминал: чёрный фон, моноширинный шрифт, зелёный и янтарный текст, строка запроса в виде `> _`.
+Офлайн-справочник команд системного администратора. Интерфейс на русском и английском (по языку системы) и выглядит как терминал: чёрный фон, моноширинный шрифт, зелёный и янтарный текст, строка запроса в виде `> _`.
 
 Сеть приложению не нужна. Все 1739 команд лежат внутри APK. Нажатие на строку копирует команду в буфер обмена.
 
@@ -95,12 +95,12 @@ sudo zypper install ./sysref-*.rpm   # openSUSE
 
 ## Стек
 
-- Kotlin 2.0, Jetpack Compose / Compose Multiplatform 1.7, Material 3
+- Kotlin 2.4, Jetpack Compose / Compose Multiplatform 1.12, Material 3
 - Модули: `shared` (Kotlin Multiplatform: Android + JVM desktop), `app` (Android), `desktop` (Windows/Linux)
-- kotlinx.serialization для чтения базы, Compose Multiplatform Resources для базы и шрифта
-- Android Gradle Plugin 8.7.3, Gradle 8.11.1
+- kotlinx.serialization для чтения базы, Compose Multiplatform Resources для базы, шрифта и строк интерфейса
+- Android Gradle Plugin 9.5 (модуль `shared` подключает Android через `com.android.kotlin.multiplatform.library`), Gradle 9.9
 - Версии плагинов и библиотек собраны в каталоге `gradle/libs.versions.toml`
-- `minSdk` 24, `targetSdk` 35, `compileSdk` 35
+- `minSdk` 24, `targetSdk` 36 (требование Google Play с 31 августа 2026), `compileSdk` 37 (его требуют библиотеки Compose 1.12)
 - Байткод Java/Kotlin: 17
 - JDK для сборки: 17 или 21
 - Шрифт JetBrains Mono (лицензия OFL, текст в `third_party/jetbrains-mono/`)
@@ -111,6 +111,8 @@ sudo zypper install ./sysref-*.rpm   # openSUSE
 shared/                             общий код Android и десктопа (Kotlin Multiplatform)
     src/commonMain/composeResources/files/commands.json   база команд
     src/commonMain/composeResources/font/                 JetBrains Mono
+    src/commonMain/composeResources/values/strings.xml    строки интерфейса на английском (по умолчанию)
+    src/commonMain/composeResources/values-ru/strings.xml строки интерфейса на русском
     src/commonMain/kotlin/com/sysref/commands/
         Model.kt                    платформы, разделы, ранжирование поиска
         Favorites.kt                избранное: фильтр и интерфейс хранилища
@@ -121,6 +123,8 @@ shared/                             общий код Android и десктоп�
         ui/SearchPane.kt            поиск, строка запроса, чипы фильтра
         ui/Components.kt            общие элементы: шапка, строка команды, звёздочка, метка опасной команды
         ui/Highlight.kt             подсветка совпадений
+        ui/Labels.kt                строки названий платформ, разделов и чипа "все"
+        ui/Clip.kt                  запись команды в буфер обмена (Android и десктоп)
         ui/Theme.kt                 цвета терминала и шрифт
         ui/Platform.kt              системная "назад" и горячие клавиши
     src/androidMain/                избранное в SharedPreferences, BackHandler
@@ -173,6 +177,14 @@ docs/fdroid-inclusion.md            как повторить подготовк
 
 Русские названия платформ и разделов заданы в `Model.kt`, не в JSON. Плейсхолдеры вроде `<пакет>` остаются частью строки команды.
 
+## Языки интерфейса
+
+Строки интерфейса лежат в `shared/src/commonMain/composeResources/values/strings.xml` (английский, используется по умолчанию) и `values-ru/strings.xml` (русский). Язык выбирается по языку системы: при русском языке интерфейс русский, при любом другом - английский. На десктопе язык берётся из настроек ОС или из `-Duser.language=ru|en`.
+
+Числа со словами (`база: 5 команд`, `3 matches`) сделаны через `plurals`: для русского нужны формы `one`, `few`, `many`, `other`, для английского `one` и `other`. Тест `LocalizationTest` проверяет, что у обоих языков одинаковые ключи и плейсхолдеры, а у каждой платформы и раздела есть название.
+
+Чтобы добавить язык, создайте `values-<код>/strings.xml` с теми же ключами.
+
 ## Как править команды
 
 1. Добавьте или измените пару "команда, описание" в `tools/entries_linux.py` или `tools/entries_windows.py`.
@@ -201,7 +213,7 @@ JSON руками не правят: CI сверяет его с генерат�
 
 ## Сборка
 
-Нужны JDK 17 или 21 и Android SDK: платформа Android 35 и Build-Tools 34.0.0 (версия по умолчанию для AGP 8.7). Переменная `ANDROID_HOME` указывает на SDK. Android Studio сама создаёт `local.properties` с `sdk.dir`. Этот файл в git не входит.
+Нужны JDK 17 или 21 и Android SDK: платформа Android 37 и Build-Tools 36.0.0 (версия по умолчанию для AGP 9.5). Переменная `ANDROID_HOME` указывает на SDK. Android Studio сама создаёт `local.properties` с `sdk.dir`. Этот файл в git не входит.
 
 ### Android Studio
 
@@ -211,7 +223,7 @@ JSON руками не правят: CI сверяет его с генерат�
 app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Нужна Android Studio, которая понимает Android Gradle Plugin 8.7.
+Нужна Android Studio, которая понимает Android Gradle Plugin 9.5.
 
 ### Командная строка
 
@@ -219,7 +231,7 @@ app/build/outputs/apk/debug/app-debug.apk
 export ANDROID_HOME="$HOME/Android/Sdk"   # или путь к вашему SDK
 ./gradlew :app:assembleDebug
 ./gradlew :app:assembleRelease
-./gradlew :shared:desktopTest :shared:testDebugUnitTest   # unit-тесты общего кода
+./gradlew :shared:desktopTest :shared:testAndroidHostTest   # unit-тесты общего кода
 ./gradlew :app:lintDebug                                   # Android lint
 ```
 
@@ -298,13 +310,13 @@ export KEY_PASSWORD=...
 - Поиск - это подстрока, а не исправление опечаток.
 - Release без переменной `KEYSTORE_FILE` не подписан и на телефон не ставится.
 - Десктопные установщики не подписаны: на Windows возможно предупреждение SmartScreen. `.deb` рассчитан на Ubuntu 24.04+/Debian 13+, для старых систем есть `.tar.gz`. Сборок для macOS и ARM нет.
-- Интерфейс только тёмный и только на русском. Локализации интерфейса нет, описания команд тоже на русском.
+- Интерфейс только тёмный. Языки интерфейса: русский и английский. Описания команд в базе только на русском, при английском интерфейсе они остаются русскими.
 
 ## F-Droid
 
 F-Droid собирает только Android-модуль `app` (`subdir: app`). Модули `shared` и `desktop` ему не мешают, все зависимости берутся из Google Maven и Maven Central. Сборка `assembleRelease` без `KEYSTORE_FILE` остаётся неподписанной: F-Droid собирает её сам и подписывает своим ключом. Тексты, значок и снимки карточки лежат в `fastlane/metadata/android/` (`ru` и `en-US`).
 
-Черновик метаданных для репозитория [fdroiddata](https://gitlab.com/fdroid/fdroiddata) - `docs/fdroid-metadata.yml`. В сборку приложения он не входит. В fdroiddata его кладут как `metadata/com.sysref.commands.yml`. В нём строки `Builds` для опубликованных тегов `v1.0.0`, `v1.1.0` и `v1.2.0`, новые теги `fdroid checkupdates` добавит сам (`AutoUpdateMode: Version`, `UpdateCheckMode: Tags`). Зависимости только из Google Maven и Maven Central, без сервисов Google, трекеров и разрешений. Как повторить подготовку: [docs/fdroid-inclusion.md](docs/fdroid-inclusion.md).
+Черновик метаданных для репозитория [fdroiddata](https://gitlab.com/fdroid/fdroiddata) - `docs/fdroid-metadata.yml`. В сборку приложения он не входит. В fdroiddata его кладут как `metadata/com.sysref.commands.yml`. В нём строки `Builds` для опубликованных тегов `v1.0.0`-`v1.3.0`, новые теги `fdroid checkupdates` добавит сам (`AutoUpdateMode: Version`, `UpdateCheckMode: Tags`). Зависимости только из Google Maven и Maven Central, без сервисов Google, трекеров и разрешений. Как повторить подготовку: [docs/fdroid-inclusion.md](docs/fdroid-inclusion.md).
 
 ## Лицензия
 

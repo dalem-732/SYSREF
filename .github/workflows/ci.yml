@@ -41,7 +41,7 @@ jobs:
       - name: Test, lint and build
         run: |
           chmod +x gradlew
-          ./gradlew :shared:desktopTest :shared:testDebugUnitTest :app:lintDebug :app:assembleDebug :desktop:createDistributable
+          ./gradlew :shared:desktopTest :shared:testAndroidHostTest :app:lintDebug :app:assembleDebug :desktop:createDistributable
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: failure()

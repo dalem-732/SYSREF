@@ -74,27 +74,27 @@ enum class Category(
     SERVICES("services", "Службы", listOf("службы", "служба", "services", "service", "сервис")),
     FIREWALL("firewall", "Файрвол", listOf("файрвол", "firewall", "брандмауэр", "межсетевой")),
     NETWORK("network", "Сеть", listOf("сеть", "сети", "network")),
-    NETTOOLS("nettools", "Диагностика сети", listOf("диагностика", "сниффер")),
+    NETTOOLS("nettools", "Диагностика сети", listOf("диагностика", "сниффер", "diagnostics", "sniffer")),
     USERS("users", "Пользователи", listOf("пользователи", "пользователь", "users", "user", "группы", "группа")),
     DISKS("disks", "Диски", listOf("диски", "диск", "disks", "disk", "разделы", "раздел", "файловая")),
     LVM("lvm", "LVM", listOf("lvm", "логические тома")),
     FILES("files", "Файлы и каталоги", listOf("файлы", "файл", "каталоги", "каталог", "files", "filesystem")),
-    PERMS("perms", "Права и владельцы", listOf("права", "владелец", "доступ")),
+    PERMS("perms", "Права и владельцы", listOf("права", "владелец", "доступ", "permissions", "owner")),
     ARCHIVE("archive", "Архивы", listOf("архивы", "архив", "archive", "tar", "zip")),
     TEXT("text", "Текст", listOf("текст", "text")),
     PROCESS("process", "Процессы", listOf("процессы", "процесс", "process", "память")),
     SYSTEMD("systemd", "systemd", listOf("systemd", "юнит", "юниты", "таймеры")),
-    CRON("cron", "Планировщик", listOf("cron", "планировщик", "расписание", "crontab")),
-    LOGS("logs", "Журналы и безопасность", listOf("журналы", "журнал", "логи", "лог", "безопасность", "security")),
-    SHELL("shell", "Оболочка", listOf("оболочка", "shell", "bash", "терминал")),
-    REMOTE("remote", "Удалённый доступ", listOf("ssh", "удалённый", "удаленный", "scp")),
+    CRON("cron", "Планировщик", listOf("cron", "планировщик", "расписание", "crontab", "scheduler")),
+    LOGS("logs", "Журналы и безопасность", listOf("журналы", "журнал", "логи", "лог", "безопасность", "security", "logs")),
+    SHELL("shell", "Оболочка", listOf("оболочка", "shell", "bash", "терминал", "terminal")),
+    REMOTE("remote", "Удалённый доступ", listOf("ssh", "удалённый", "удаленный", "scp", "remote")),
     GIT("git", "Git", listOf("git", "гит", "репозиторий")),
     DOCKER("docker", "Docker", listOf("docker", "докер", "контейнер", "контейнеры")),
     SYSTEM("system", "Система", listOf("система", "system", "сведения")),
-    BOOT("boot", "Загрузка и восстановление", listOf("загрузка", "восстановление", "bcdedit", "boot")),
-    TASKS("tasks", "Задачи", listOf("задачи", "задача", "планировщик", "schtasks")),
+    BOOT("boot", "Загрузка и восстановление", listOf("загрузка", "восстановление", "bcdedit", "boot", "recovery")),
+    TASKS("tasks", "Задачи", listOf("задачи", "задача", "планировщик", "schtasks", "tasks")),
     REGISTRY("registry", "Реестр", listOf("реестр", "registry", "reg")),
-    AD("ad", "AD, DNS и DHCP", listOf("active directory", "домен", "ад")),
+    AD("ad", "AD, DNS и DHCP", listOf("active directory", "домен", "ад", "domain")),
 }
 
 private val platformsById = Platform.entries.associateBy { it.id }
@@ -198,18 +198,3 @@ fun searchCommands(
         .map { it.first }
         .toList()
 }
-
-private fun pluralRu(count: Int, one: String, few: String, many: String): String {
-    val mod10 = count % 10
-    val mod100 = count % 100
-    val word = when {
-        mod10 == 1 && mod100 != 11 -> one
-        mod10 in 2..4 && mod100 !in 12..14 -> few
-        else -> many
-    }
-    return "$count $word"
-}
-
-fun pluralMatches(count: Int): String = pluralRu(count, "совпадение", "совпадения", "совпадений")
-
-fun pluralCommands(count: Int): String = pluralRu(count, "команда", "команды", "команд")
