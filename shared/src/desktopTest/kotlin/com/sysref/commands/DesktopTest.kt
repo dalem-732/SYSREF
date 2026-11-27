@@ -35,6 +35,33 @@ class DesktopTest {
     }
 
     @Test
+    fun saveReplacesExistingFileWithoutLeftovers() {
+        val dir = Files.createTempDirectory("sysref").toFile()
+        val file = File(dir, "favorites.json")
+        file.writeText("[\"old\"]")
+        FileFavoritesStorage(file).save(setOf("linux/files/ls"))
+        assertEquals(setOf("linux/files/ls"), FileFavoritesStorage(file).load())
+        assertEquals(listOf("favorites.json"), dir.list()!!.toList())
+        dir.deleteRecursively()
+    }
+
+    @Test
+    fun saveToUnwritablePlaceDoesNotThrow() {
+        val blocker = File.createTempFile("sysref", ".blk")
+        FileFavoritesStorage(File(blocker, "favorites.json")).save(setOf("a"))
+        blocker.delete()
+    }
+
+    @Test
+    fun bundledDangerFlagsMarkDestructiveCommands() {
+        val commands = parseCommands(File("src/commonMain/composeResources/files/commands.json").readText())
+        val dangerous = commands.filter { it.danger }.map { it.command }
+        assertTrue("rm -rf <каталог>" in dangerous)
+        assertTrue("iptables -F" in dangerous)
+        assertTrue(commands.first { it.command == "ls" }.danger.not())
+    }
+
+    @Test
     fun brokenFileGivesEmptyFavorites() {
         val file = File.createTempFile("sysref", ".json")
         file.writeText("{not json")

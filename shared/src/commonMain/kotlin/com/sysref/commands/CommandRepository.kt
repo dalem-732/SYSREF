@@ -1,6 +1,8 @@
 package com.sysref.commands
 
 import com.sysref.commands.resources.Res
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -14,6 +16,7 @@ private data class CommandJson(
     val description: String,
     val platform: String,
     val category: String,
+    val danger: Boolean = false,
 )
 
 private val json = Json { ignoreUnknownKeys = true }
@@ -26,10 +29,12 @@ fun parseCommands(text: String): List<CommandEntry> =
             platform = item.platform,
             category = item.category,
             index = index,
+            danger = item.danger,
         )
     }
 
-/** Reads the bundled command database (composeResources/files/commands.json). */
 @OptIn(ExperimentalResourceApi::class)
-suspend fun loadCommands(): List<CommandEntry> =
-    parseCommands(Res.readBytes("files/commands.json").decodeToString())
+suspend fun loadCommands(): List<CommandEntry> {
+    val bytes = Res.readBytes("files/commands.json")
+    return withContext(Dispatchers.Default) { parseCommands(bytes.decodeToString()) }
+}

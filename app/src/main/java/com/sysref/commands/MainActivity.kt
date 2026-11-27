@@ -1,5 +1,6 @@
 package com.sysref.commands
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -13,23 +14,28 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = false
         val favoritesStorage = SharedPrefsFavoritesStorage(this)
-        // Optional launch extras (used for screenshots): screen, platform, category, query, filter, favorites.
-        val screen = intent.getStringExtra("screen") ?: "browse"
-        val platform = intent.getStringExtra("platform")
-        val category = intent.getStringExtra("category")
-        val query = intent.getStringExtra("query").orEmpty()
-        val filter = intent.getStringExtra("filter") ?: "all"
-        val favoritesOnly = intent.getBooleanExtra("favorites", false)
+        val screen = intent.safeString("screen")
+        val platform = intent.safeString("platform")
+        val category = intent.safeString("category")
+        val query = intent.safeString("query").orEmpty().take(MAX_QUERY_LENGTH)
+        val filter = intent.safeString("filter")
+        val favoritesOnly = runCatching { intent.getBooleanExtra("favorites", false) }.getOrDefault(false)
         setContent {
             SysRefRoot(
                 favoritesStorage = favoritesStorage,
-                initialMode = screen,
+                initialMode = screen.orEmpty(),
                 initialPlatform = platform,
                 initialCategory = category,
                 initialQuery = query,
-                initialFilter = filter,
+                initialFilter = filter.orEmpty(),
                 initialFavoritesOnly = favoritesOnly,
             )
         }
+    }
+
+    private fun Intent.safeString(key: String): String? = runCatching { getStringExtra(key) }.getOrNull()
+
+    private companion object {
+        const val MAX_QUERY_LENGTH = 200
     }
 }

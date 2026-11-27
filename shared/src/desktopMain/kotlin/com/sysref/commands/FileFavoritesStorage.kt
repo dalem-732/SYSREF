@@ -4,12 +4,11 @@ import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import java.io.File
+import java.io.IOException
+import java.nio.file.AtomicMoveNotSupportedException
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 
-/**
- * Favorites as a JSON array of command ids in a per-user file:
- * Windows: %APPDATA%\SYSREF\favorites.json
- * Linux:   $XDG_CONFIG_HOME/sysref/favorites.json (default ~/.config/sysref/favorites.json)
- */
 class FileFavoritesStorage(private val file: File = defaultFavoritesFile()) : FavoritesStorage {
     private val serializer = ListSerializer(String.serializer())
     private val json = Json { prettyPrint = true }
@@ -17,17 +16,33 @@ class FileFavoritesStorage(private val file: File = defaultFavoritesFile()) : Fa
     override fun load(): Set<String> = try {
         if (file.isFile) json.decodeFromString(serializer, file.readText()).toSet() else emptySet()
     } catch (error: Exception) {
-        // A broken file must not stop the app from starting.
         emptySet()
     }
 
     override fun save(favorites: Set<String>) {
-        file.parentFile?.mkdirs()
-        val tmp = File(file.parentFile, file.name + ".tmp")
-        tmp.writeText(json.encodeToString(serializer, favorites.sorted()))
-        if (!tmp.renameTo(file)) {
-            file.delete()
-            tmp.renameTo(file)
+        try {
+            write(json.encodeToString(serializer, favorites.sorted()))
+        } catch (error: IOException) {
+            return
+        } catch (error: SecurityException) {
+            return
+        }
+    }
+
+    private fun write(text: String) {
+        val target = file.absoluteFile.toPath()
+        val dir = target.parent
+        Files.createDirectories(dir)
+        val tmp = Files.createTempFile(dir, "${target.fileName}.", ".tmp")
+        try {
+            Files.writeString(tmp, text)
+            try {
+                Files.move(tmp, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
+            } catch (error: AtomicMoveNotSupportedException) {
+                Files.move(tmp, target, StandardCopyOption.REPLACE_EXISTING)
+            }
+        } finally {
+            Files.deleteIfExists(tmp)
         }
     }
 }

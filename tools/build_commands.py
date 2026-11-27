@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
-"""Build the offline command database shipped in the app."""
-
 import json
 import sys
+from collections import Counter
 from pathlib import Path
+
+from entries_linux import register as register_linux
+from entries_windows import register as register_windows
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "shared" / "src" / "commonMain" / "composeResources" / "files" / "commands.json"
 
 PLATFORMS = {"debian", "rhel", "suse", "arch", "linux", "cmd", "ps"}
+DISTROS = {"debian", "rhel", "suse", "arch"}
 CATEGORIES = {
     "packages",
     "services",
@@ -35,6 +38,44 @@ CATEGORIES = {
     "tasks",
     "registry",
     "ad",
+}
+
+CATEGORY_BY_PREFIX = [
+    (("flatpak ",), "packages"),
+    (("wmic ",), "system"),
+    (("tasklist", "taskkill"), "process"),
+    (("wevtutil", "auditpol"), "logs"),
+    (("shutdown", "powercfg"), "boot"),
+]
+
+DANGEROUS = {
+    ("linux", "rm -r <каталог>"),
+    ("linux", "rm -rf <каталог>"),
+    ("linux", "wipefs -a /dev/sdX1"),
+    ("linux", "mkfs.ext4 /dev/sdX1"),
+    ("linux", "mkfs.xfs /dev/sdX1"),
+    ("linux", "mkfs.btrfs /dev/sdX1"),
+    ("linux", "dd if=/dev/zero of=<файл> bs=1M count=10 status=progress"),
+    ("linux", "pvremove /dev/sdX1"),
+    ("linux", "vgremove <vg>"),
+    ("linux", "lvremove /dev/<vg>/<lv>"),
+    ("linux", "userdel -r <пользователь>"),
+    ("linux", "crontab -r"),
+    ("linux", "git reset --hard HEAD~1"),
+    ("linux", "git clean -fd"),
+    ("linux", "iptables -F"),
+    ("debian", "ufw reset"),
+    ("rhel", "setenforce 0"),
+    ("cmd", "clean"),
+    ("cmd", "format fs=ntfs quick"),
+    ("cmd", "rmdir /s /q <каталог>"),
+    ("cmd", "del /s /q <каталог>\\*"),
+    ("cmd", "netsh advfirewall set allprofiles state off"),
+    ("ps", "Initialize-Disk -Number 1 -PartitionStyle GPT"),
+    ("ps", "Format-Volume -DriveLetter E -FileSystem NTFS -NewFileSystemLabel Data"),
+    ("ps", "Remove-Item C:\\temp\\dir -Recurse -Force"),
+    ("ps", "Remove-LocalUser -Name <пользователь>"),
+    ("ps", "Remove-ADUser -Identity <пользователь>"),
 }
 
 entries = []
@@ -64,56 +105,55 @@ def many(platform, category, pairs):
         add(platform, category, command, description)
 
 
-from entries_linux import register as register_linux
-from entries_windows import register as register_windows
+def build():
+    register_linux(add, many)
+    register_windows(add, many)
 
-register_linux(add, many)
-register_windows(add, many)
+    linux_commands = {item["command"] for item in entries if item["platform"] == "linux"}
+    result = []
+    for item in entries:
+        if item["platform"] in DISTROS and item["command"] in linux_commands:
+            continue
+        for prefixes, category in CATEGORY_BY_PREFIX:
+            if item["command"].startswith(prefixes):
+                item["category"] = category
+        if (item["platform"], item["command"]) in DANGEROUS:
+            item["danger"] = True
+        result.append(item)
 
-DISTROS = {"debian", "rhel", "suse", "arch"}
-linux_commands = {item["command"] for item in entries if item["platform"] == "linux"}
-deduped = []
-for item in entries:
-    if item["platform"] in DISTROS and item["command"] in linux_commands:
-        continue
-    command = item["command"]
-    if command.startswith("flatpak "):
-        item["category"] = "packages"
-    if command.startswith("wmic "):
-        item["category"] = "system"
-    if command.startswith("tasklist") or command.startswith("taskkill"):
-        item["category"] = "process"
-    if command.startswith("wevtutil") or command.startswith("auditpol"):
-        item["category"] = "logs"
-    if command.startswith("shutdown") or command.startswith("powercfg"):
-        item["category"] = "boot"
-    deduped.append(item)
-entries = deduped
+    seen = set()
+    for item in result:
+        key = (item["platform"], item["category"], item["command"])
+        if key in seen:
+            raise SystemExit(f"duplicate command id {'/'.join(key)}")
+        seen.add(key)
 
-seen = set()
-for item in entries:
-    key = (item["platform"], item["category"], item["command"])
-    if key in seen:
-        raise SystemExit(f"duplicate: {key}")
-    seen.add(key)
+    flagged = {(item["platform"], item["command"]) for item in result if item.get("danger")}
+    missing = DANGEROUS - flagged
+    if missing:
+        raise SystemExit(f"dangerous commands not found: {sorted(missing)}")
 
-if len(entries) < 400:
-    raise SystemExit(f"too few commands: {len(entries)}")
+    if len(result) < 400:
+        raise SystemExit(f"too few commands: {len(result)}")
+    return result
 
-OUT.parent.mkdir(parents=True, exist_ok=True)
-payload = {"version": 1, "commands": entries}
-# The app keys favorites by platform/category/command, so that triple must be unique.
-_seen = set()
-for _item in entries:
-    _key = (_item["platform"], _item["category"], _item["command"])
-    if _key in _seen:
-        raise SystemExit(f"duplicate command id {'/'.join(_key)}")
-    _seen.add(_key)
 
-OUT.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+def main():
+    commands = build()
+    text = json.dumps({"version": 1, "commands": commands}, ensure_ascii=False, indent=2) + "\n"
+    if "--check" in sys.argv[1:]:
+        current = OUT.read_text(encoding="utf-8") if OUT.is_file() else ""
+        if current != text:
+            raise SystemExit(f"{OUT.relative_to(ROOT)} is out of date: run python3 tools/build_commands.py")
+        print(f"{OUT.relative_to(ROOT)} is up to date ({len(commands)} commands)")
+        return
+    OUT.parent.mkdir(parents=True, exist_ok=True)
+    OUT.write_text(text, encoding="utf-8")
+    print(f"wrote {len(commands)} commands -> {OUT}")
+    print("platforms:", dict(Counter(i["platform"] for i in commands)))
+    print("categories:", dict(Counter(i["category"] for i in commands)))
+    print("dangerous:", sum(1 for i in commands if i.get("danger")))
 
-from collections import Counter
 
-print(f"wrote {len(entries)} commands -> {OUT}")
-print("platforms:", dict(Counter(i["platform"] for i in entries)))
-print("categories:", dict(Counter(i["category"] for i in entries)))
+if __name__ == "__main__":
+    main()
