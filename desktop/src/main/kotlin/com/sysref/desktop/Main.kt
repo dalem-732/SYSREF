@@ -2,13 +2,13 @@ package com.sysref.desktop
 
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.res.loadImageBitmap
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
@@ -18,6 +18,7 @@ import com.sysref.commands.FileFavoritesStorage
 import com.sysref.commands.ui.AppShortcut
 import com.sysref.commands.ui.SysRefRoot
 import kotlinx.coroutines.flow.MutableSharedFlow
+import org.jetbrains.skia.Image
 import java.awt.Dimension
 
 private class LaunchArgs(args: Array<String>) {
@@ -38,7 +39,7 @@ fun main(args: Array<String>) {
         val storage = remember { FileFavoritesStorage() }
         val icon = remember {
             val stream = Thread.currentThread().contextClassLoader.getResourceAsStream("sysref-icon.png")
-            stream?.use { BitmapPainter(loadImageBitmap(it)) }
+            stream?.use { BitmapPainter(Image.makeFromEncoded(it.readBytes()).toComposeImageBitmap()) }
         }
         Window(
             onCloseRequest = ::exitApplication,
