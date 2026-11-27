@@ -12,4 +12,4 @@ Platforms: Debian/Ubuntu, RHEL/Fedora (Rocky and CentOS use the same set), openS
 
 Sections include packages, services, firewall, network, network diagnostics, users, disks, LVM, files and directories, permissions, archives, text, processes, systemd, the scheduler, logs and security, the shell, remote access, Git, Docker, the system, boot and recovery, scheduled tasks, the registry, and AD/DNS/DHCP.
 
-Descriptions are short cards, not manual pages. The interface and the command descriptions are in Russian. When a tool is not part of a minimal install, the card says so.
+Descriptions are short cards, not manual pages. The interface is in English or Russian, following the system language. The command descriptions are in Russian. When a tool is not part of a minimal install, the card says so.

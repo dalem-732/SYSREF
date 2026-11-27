@@ -33,21 +33,36 @@ import androidx.compose.ui.unit.sp
 import com.sysref.commands.CommandEntry
 import com.sysref.commands.categoryById
 import com.sysref.commands.platformById
-import com.sysref.commands.pluralCommands
+import com.sysref.commands.resources.Res
+import com.sysref.commands.resources.app_tagline
+import com.sysref.commands.resources.danger_description
+import com.sysref.commands.resources.danger_mark
+import com.sysref.commands.resources.db_count
+import com.sysref.commands.resources.db_loading
+import com.sysref.commands.resources.meta
+import com.sysref.commands.resources.mode_browse
+import com.sysref.commands.resources.mode_search
+import com.sysref.commands.resources.star_add
+import com.sysref.commands.resources.star_remove
+import com.sysref.commands.resources.star_state_off
+import com.sysref.commands.resources.star_state_on
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun Header(count: Int?) {
+    val tagline = stringResource(Res.string.app_tagline)
     Column(Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
         Text(
             text = buildAnnotatedString {
                 withStyle(SpanStyle(color = Amber, fontWeight = FontWeight.Bold)) { append("SYSREF") }
-                withStyle(SpanStyle(color = PhosphorDim)) { append("  справочник команд  offline") }
+                withStyle(SpanStyle(color = PhosphorDim)) { append("  "); append(tagline) }
             },
             fontFamily = Mono,
             fontSize = 15.sp,
         )
         Text(
-            text = if (count == null) "база: ..." else "база: ${pluralCommands(count)}",
+            text = if (count == null) stringResource(Res.string.db_loading) else pluralStringResource(Res.plurals.db_count, count, count),
             color = PhosphorMuted,
             fontFamily = Mono,
             fontSize = 12.sp,
@@ -64,8 +79,8 @@ internal fun ModeSwitch(screen: Screen, onScreen: (Screen) -> Unit) {
             .padding(horizontal = 14.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        ModeKey("справочник", screen == Screen.BROWSE) { onScreen(Screen.BROWSE) }
-        ModeKey("поиск", screen == Screen.SEARCH) { onScreen(Screen.SEARCH) }
+        ModeKey(stringResource(Res.string.mode_browse), screen == Screen.BROWSE) { onScreen(Screen.BROWSE) }
+        ModeKey(stringResource(Res.string.mode_search), screen == Screen.SEARCH) { onScreen(Screen.SEARCH) }
     }
 }
 
@@ -126,13 +141,15 @@ internal fun CommandBlock(
 
 @Composable
 private fun StarToggle(favorite: Boolean, onToggle: () -> Unit) {
+    val description = stringResource(if (favorite) Res.string.star_remove else Res.string.star_add)
+    val state = stringResource(if (favorite) Res.string.star_state_on else Res.string.star_state_off)
     Box(
         modifier = Modifier
             .size(48.dp)
             .toggleable(value = favorite, role = Role.Checkbox, onValueChange = { onToggle() })
             .semantics {
-                contentDescription = if (favorite) "Убрать из избранного" else "Добавить в избранное"
-                stateDescription = if (favorite) "в избранном" else "не в избранном"
+                contentDescription = description
+                stateDescription = state
             },
         contentAlignment = Alignment.Center,
     ) {
@@ -151,8 +168,11 @@ private fun CommandText(
     onCopy: (CommandEntry) -> Unit,
     modifier: Modifier,
 ) {
-    val platform = platformById(entry.platform)
-    val category = categoryById(entry.category)
+    val meta = stringResource(
+        Res.string.meta,
+        stringResource(platformById(entry.platform).titleRes),
+        stringResource(categoryById(entry.category).titleRes),
+    )
     Column(
         modifier
             .clickable { onCopy(entry) }
@@ -177,7 +197,7 @@ private fun CommandText(
             DangerMark()
         }
         Text(
-            text = rememberHighlight("${platform.title} · ${category.title}", query, PhosphorMuted, Amber),
+            text = rememberHighlight(meta, query, PhosphorMuted, Amber),
             fontFamily = Mono,
             fontSize = 11.sp,
             modifier = Modifier.padding(top = 4.dp),
@@ -187,8 +207,9 @@ private fun CommandText(
 
 @Composable
 private fun DangerMark() {
+    val description = stringResource(Res.string.danger_description)
     Text(
-        text = "[!] опасная команда: проверьте аргументы",
+        text = stringResource(Res.string.danger_mark),
         color = Danger,
         fontFamily = Mono,
         fontWeight = FontWeight.Bold,
@@ -197,7 +218,7 @@ private fun DangerMark() {
             .padding(top = 4.dp)
             .border(1.dp, Danger)
             .padding(horizontal = 6.dp, vertical = 2.dp)
-            .semantics { contentDescription = "Опасная команда, проверьте аргументы перед запуском" },
+            .semantics { contentDescription = description },
     )
 }
 
